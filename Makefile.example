@@ -1,0 +1,34 @@
+
+CC := g++ # This is the main compiler
+SRCDIR := src
+BUILDDIR := build
+TARGET := bin/app
+ 
+SRCEXT := cpp
+SOURCES := $(wildcard $(SRCDIR)/*.$(SRCEXT))
+OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
+LFLAGS := -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer -framework Cocoa
+CFLAGS := -std=c++11 -g
+LIB :=
+INC := -I include
+
+$(TARGET): $(OBJECTS)
+	@echo "Linking..."
+	@echo "$(CC) $^ -o $(TARGET) $(LIB)"; $(CC) $^ -o $(TARGET) $(LIB) $(CFLAGS) $(LFLAGS)
+
+$(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
+	@mkdir -p $(dir $@)
+	@echo "$(CC) $(CFLAGS) $(INC) -c $@ $<"; $(CC) $(CFLAGS) $(INC) -c -o $@ $<
+
+clean:
+	@echo "Cleaning..."; 
+	@echo "$(RM) -r $(BUILDDIR) $(TARGET)"; $(RM) -r $(BUILDDIR) $(TARGET)
+
+.PHONY: clean
+
+#bundle_contents = $(TARGET).app/Contents
+#APP_NAME_bundle: $(TARGET) 
+#	mkdir -p $(bundle_contents)/MacOS
+#	mkdir -p $(bundle_contents)/Resources
+#	echo "APPL????" > $(bundle_contents)/PkgInfo
+#	$(INSTALL_PROGRAM) $< $(bundle_contents)/MacOS/
