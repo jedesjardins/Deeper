@@ -33,7 +33,7 @@ int main( int argc, char* args[] )
 
 	SDL_Window *window = nullptr;
 	SDL_Surface *screenSurface = nullptr;
-	SDL_Renderer *render = nullptr;
+
 
 	window = SDL_CreateWindow("Echelon", 
 							SDL_WINDOWPOS_UNDEFINED, 
@@ -41,7 +41,8 @@ int main( int argc, char* args[] )
 							SCREEN_WIDTH,
 							SCREEN_HEIGHT,
 							SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
-
+	
+	Camera camera{window};
 
 	bool running = true;
 
@@ -54,13 +55,17 @@ int main( int argc, char* args[] )
 
 	while(running)
 	{
-		SDL_Delay(1);
-
+		
 		running = update(dt);
+
+		//draw
+		camera.clear();
+		camera.push();
+
+		SDL_Delay(5);
 
 		dt = frames_lock.tick();
 		fps = frames_lock.getFPS();
-		std::cout << fps << std::endl;
 	}
 
 	SDL_DestroyWindow(window);
