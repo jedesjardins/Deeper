@@ -12,13 +12,13 @@ function update(dt)
 	local name = {"{first_name} {last_name}"}
 	local first_name = {"James"}
 	local last_name = {"Desjardins"}
-	local greeting = {"Hello", "Yo", "Sup", "Howdy"}
+	local greeting = {"Hello", "Yo:casual", "Sup:casual", "Howdy:southern"}
 
 	lex:add("name", name)
 	lex:add("greeting", greeting)
 	lex:add("first_name", first_name)
 	lex:add("last_name", last_name)
-	print("output: ", lex:string("{greeting}, my name is {name}"))
+	print("output: ", lex:string("{greeting:casual}, my name is [name]", {name = "James Desjardins"}))
 
 	return false
 end
