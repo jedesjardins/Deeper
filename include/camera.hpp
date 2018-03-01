@@ -3,10 +3,22 @@
 
 #include <SDL2/SDL.h>
 #include <iostream>
+#include <vector>
 #include <utility>
 
 typedef std::pair<double, double> Point;
 typedef SDL_Rect Rect;
+
+class DrawContainer
+{
+public:
+    std::vector<Rect> objs;
+    Rect rect;
+
+    DrawContainer();
+
+    void add(Rect);
+};
 
 class Camera
 {
@@ -37,6 +49,8 @@ public:
     void push();
 
     void drawRect(const Rect &r);
+
+    void draw(DrawContainer &);
 
 };
 

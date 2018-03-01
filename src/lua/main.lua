@@ -1,24 +1,24 @@
-local LUA_FOLDER = (...):match("(.-)[^%.]+$")
+LUA_FOLDER = (...):match("(.-)[^%.]+$")
+RESOURCE_FOLDER = "resources.data."
 
-local ECS = require(LUA_FOLDER .. 'engine.ecs')
-local Lexicon = require(LUA_FOLDER .. 'engine.lexicon')
+ECS = require(LUA_FOLDER .. 'engine.ecs')			-- ECS class
+LEXICON = require(LUA_FOLDER .. 'engine.lexicon')	-- lexicon class
+STATE = require(LUA_FOLDER .. 'engine.state')		-- state class
 
-local bool = 0
+math.randomseed(os.time())
 
-function update(dt)
-	math.randomseed(os.time())
-	local lex = Lexicon.new()
+KS = KEYSTATE.new()
 
-	local name = {"{first_name} {last_name}"}
-	local first_name = {"James"}
-	local last_name = {"Desjardins"}
-	local greeting = {"Hello", "Yo:casual", "Sup:casual", "Howdy:southern"}
+local input = Input.new()
 
-	lex:add("name", name)
-	lex:add("greeting", greeting)
-	lex:add("first_name", first_name)
-	lex:add("last_name", last_name)
-	print("output: ", lex:string("{greeting:casual}, my name is [name]", {name = "James Desjardins"}))
+local practicestate = require(LUA_FOLDER .. 'states.practicestate')
 
-	return false
+function update(dt, drawcontainer)
+	local is_running = practicestate:update(dt, input)
+
+	practicestate:draw(drawcontainer)
+
+	return is_running
 end
+
+

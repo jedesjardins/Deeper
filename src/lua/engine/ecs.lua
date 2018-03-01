@@ -66,8 +66,16 @@ function ECS:clearEntities()
 	self.openUids = {}
 end
 
+function ECS:addBeginSystem(name, func)
+	self.systems[name] = func
+end
+
 -- TODO: sort on priorities
-function ECS:addSystem(name, func, priority)
+function ECS:addSystem(name, func)
+	self.systems[name] = func
+end
+
+function ECS:addEndSystem(name, func)
 	self.systems[name] = func
 end
 
@@ -87,10 +95,10 @@ function ECS:clearSystems()
 	end
 end
 
-function ECS:update(dt)
+function ECS:update(dt, input)
 	for name, func in pairs(self.systems) do
-		func()
+		func(self, dt, input)
 	end
-end
+end 
 
 return ECS

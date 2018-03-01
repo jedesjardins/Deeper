@@ -8,16 +8,40 @@
 #include "sol.hpp"
 #include "clock.hpp"
 #include "camera.hpp"
+#include "input.hpp"
 
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
-void print_stuff()
+void registerUsertypes(sol::state &lua)
 {
-	std::cout << "a" << std::endl;
+	lua.new_usertype<Rect>("Rect",
+		"x", &Rect::x,
+		"y", &Rect::y,
+		"w", &Rect::w,
+		"h", &Rect::h
+		);
+
+	lua.new_usertype<DrawContainer>("DrawContainer",
+		"add", &DrawContainer::add
+		);
+
+	lua.new_usertype<KEYSTATE>("KEYSTATE",
+		"NONE", sol::readonly(&KEYSTATE::NONE),
+		"PRESSED", sol::readonly(&KEYSTATE::PRESSED),
+		"HELD", sol::readonly(&KEYSTATE::HELD),
+		"RELEASED", sol::readonly(&KEYSTATE::RELEASED)
+		);
+
+	lua.new_usertype<Input>("Input",
+		"keystates", &Input::keystates,
+		"update", &Input::update,
+		"getKeyState", &Input::getKeyState
+		);
 }
+
 
 int main( int argc, char* args[] )
 {
@@ -30,12 +54,13 @@ int main( int argc, char* args[] )
 					sol::lib::math,
 					sol::lib::os);
 
+	registerUsertypes(lua);
+
 	lua.script("require('src.lua.main')");
 
 	sol::function update = lua["update"];
 
 	SDL_Init(SDL_INIT_VIDEO);
-
 	SDL_Window *window = nullptr;
 	SDL_Surface *screenSurface = nullptr;
 
@@ -48,6 +73,7 @@ int main( int argc, char* args[] )
 							SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
 	
 	Camera camera{window};
+	Clock frames_lock{};
 
 	bool running = true;
 
@@ -55,19 +81,18 @@ int main( int argc, char* args[] )
 	float dt = 1000.0/framspersecondmax;
 	float fps;
 
-	Clock frames_lock{};
+	
 	frames_lock.tick();
 
 	while(running)
-	{
-		
-		running = update(dt);
+	{	
+		DrawContainer dc;
 
-		//draw
+		running &= (bool)update(dt, dc);
+
 		camera.clear();
+		camera.draw(dc);
 		camera.push();
-
-		SDL_Delay(5);
 
 		dt = frames_lock.tick();
 		fps = frames_lock.getFPS();

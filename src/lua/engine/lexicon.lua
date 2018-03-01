@@ -15,7 +15,7 @@ end
 function Lexicon.new()
 	local self = setmetatable({}, Lexicon)
 
-	self.phrases = {}
+	self.syntax = {}
 
 	return self
 end
@@ -52,7 +52,7 @@ function Lexicon:string(str, scratchboard)
 					tag = self:string(tag)
 				else
 					-- fill variable
-					tag = scratchboard[tag] or ""
+					tag = scratchboard[tag] or "["..tag.."]"
 				end
 				table.insert(output, tag)
 
@@ -81,42 +81,51 @@ function Lexicon:fill(tag_attr_string)
 
 	local tag = tag_attrs[1]
 	local attr = tag_attrs[2]
-	print(tag)
 
-	if self.phrases[tag]["phrase"] then
-		if self.phrases[tag][attr] then
-			local rand = math.random(1, #self.phrases[tag][attr])
-			local attr_index = self.phrases[tag][attr][rand]
-			return self.phrases[tag]["phrase"][attr_index]
+	if not self.syntax[tag] then
+		return "<no tag: "..tag..">"
+	end
+
+	if self.syntax[tag]["phrase"] and #self.syntax[tag]["phrase"] > 0 then
+		if self.syntax[tag][attr] then
+			local rand = math.random(1, #self.syntax[tag][attr])
+			local attr_index = self.syntax[tag][attr][rand]
+			return self.syntax[tag]["phrase"][attr_index]
 		else
-			return self.phrases[tag]["phrase"][math.random(1, #self.phrases[tag]["phrase"])]
+			return self.syntax[tag]["phrase"][math.random(1, #self.syntax[tag]["phrase"])]
 		end
 	else
-		return "nil"
+		return "<no phrases in tag: "..tag..">"
 	end
 end
 
-function Lexicon:add(tag_name, phrase)
-	self.phrases[tag_name] = {
-		phrase = {}
-	}
+function Lexicon:addTag(tag_name, phrase)
+	if not self.syntax[tag_name] then 
+		self.syntax[tag_name] = {phrase = {}}
+	end
 
 	for i, tag_attr_string in ipairs(phrase) do
 		local tag_attrs = string.split(tag_attr_string, ":")
 		local tag = tag_attrs[1]
 
-		table.insert(self.phrases[tag_name]["phrase"], tag)
+		table.insert(self.syntax[tag_name]["phrase"], tag)
 
 
 		local attr = ""
 		for j=2,#tag_attrs do
 			attr = tag_attrs[j]
-			if not self.phrases[tag_name][attr] then
-				self.phrases[tag_name][attr] = {}
+			if not self.syntax[tag_name][attr] then
+				self.syntax[tag_name][attr] = {}
 			end
 
-			table.insert(self.phrases[tag_name][attr], i)
+			table.insert(self.syntax[tag_name][attr], i)
 		end
+	end
+end
+
+function Lexicon:addTags(tags)
+	for tag_name, phrase in pairs(tags) do
+		self:addTag(tag_name, phrase)
 	end
 end
 

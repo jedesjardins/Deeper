@@ -14,6 +14,14 @@ std::ostream& operator<<(std::ostream &os, const Camera &camera)
 }
 */
 
+DrawContainer::DrawContainer()
+{}
+
+void DrawContainer::add(Rect r)
+{
+	this->rect = r;
+}
+
 void center(Rect &rect, const Point &point)
 {
 
@@ -91,4 +99,11 @@ void Camera::push()
 void Camera::drawRect(const Rect &r)
 {
 
+}
+
+void Camera::draw(DrawContainer &dc)
+{	
+	SDL_Rect r = dc.rect;
+	SDL_SetRenderDrawColor(this->render, 0xFF, 0xFF, 0xFF, 0xFF);
+	SDL_RenderDrawRect(this->render, &r);
 }
