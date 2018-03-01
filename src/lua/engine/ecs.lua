@@ -1,4 +1,4 @@
-ECS = {}
+local ECS = {}
 ECS.__index = ECS
 
 local comp_mt = {
@@ -92,3 +92,5 @@ function ECS:update(dt)
 		func()
 	end
 end
+
+return ECS

@@ -23,7 +23,12 @@ int main( int argc, char* args[] )
 {
 	sol::state lua;
 
-	lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string);
+	lua.open_libraries(sol::lib::base,
+					sol::lib::package,
+					sol::lib::string,
+					sol::lib::table,
+					sol::lib::math,
+					sol::lib::os);
 
 	lua.script("require('src.lua.main')");
 

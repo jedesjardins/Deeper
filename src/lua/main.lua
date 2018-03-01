@@ -1,14 +1,24 @@
 local LUA_FOLDER = (...):match("(.-)[^%.]+$")
 
-require(LUA_FOLDER .. 'engine.ecs')
+local ECS = require(LUA_FOLDER .. 'engine.ecs')
+local Lexicon = require(LUA_FOLDER .. 'engine.lexicon')
 
 local bool = 0
 
 function update(dt)
-	if bool < 200 then
-		bool = bool + 1
-		return true
-	else
-		return false
-	end
+	math.randomseed(os.time())
+	local lex = Lexicon.new()
+
+	local name = {"{first_name} {last_name}"}
+	local first_name = {"James"}
+	local last_name = {"Desjardins"}
+	local greeting = {"Hello", "Yo", "Sup", "Howdy"}
+
+	lex:add("name", name)
+	lex:add("greeting", greeting)
+	lex:add("first_name", first_name)
+	lex:add("last_name", last_name)
+	print("output: ", lex:string("{greeting}, my name is {name}"))
+
+	return false
 end
