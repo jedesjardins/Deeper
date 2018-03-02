@@ -8,7 +8,7 @@ SOURCES := $(wildcard $(SRCDIR)/*.$(SRCEXT))
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 LFLAGS := -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer -framework Cocoa
 CFLAGS := -std=c++14 -g 
-MACFLAGS := -DMACOS `sdl2-config --cflags --libs`
+MACFLAGS := -DMACOS `sdl2-config --cflags --libs` -lSDL2_image
 LIBDIR := lib
 LIBS := -llua
 INC := -I include

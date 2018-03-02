@@ -2,55 +2,65 @@
 #define CAMERA_H_
 
 #include <SDL2/SDL.h>
+#include <SDL2_image/SDL_image.h>
 #include <iostream>
 #include <vector>
 #include <utility>
+#include <unordered_map>
+#include <string>
 
 typedef std::pair<double, double> Point;
 typedef SDL_Rect Rect;
 
+struct DrawItem
+{
+	std::string texturename;
+	Rect rect;
+};
+
 class DrawContainer
 {
 public:
-    std::vector<Rect> objs;
-    Rect rect;
+	Rect dim;
+	std::vector<DrawItem> objs;
 
-    DrawContainer();
-
-    void add(Rect);
+	void add(DrawItem);
 };
 
 class Camera
 {
 private:
-    SDL_Window *window;
-    SDL_Renderer *render;
-    Rect vp;
-    Rect screenrect;
+	SDL_Window *window;
+	SDL_Renderer *render;
+	std::unordered_map<std::string, SDL_Texture *> textures;
+
+	Rect vp;
+	Rect screenrect;
 
 public:
-    Camera();
-    Camera(SDL_Window *window);
+	Camera(SDL_Window *window);
 
-    void position(const Point &position);
-    Point position();
+	~Camera();
 
-    void dimension(const Point &size);
-    Point dimension();
+	void position(const Point &position);
+	Point position();
 
-    void viewport(const Rect &vp);
-    Rect viewport();
+	void dimension(const Point &size);
+	Point dimension();
 
-    double getScale();
+	void viewport(const Rect &vp);
+	Rect viewport();
 
-    friend std::ostream& operator<<(std::ostream& os, const Camera &camera);
+	double getScale();
 
-    void clear();
-    void push();
+	friend std::ostream& operator<<(std::ostream& os, const Camera &camera);
 
-    void drawRect(const Rect &r);
+	void clear();
+	void push();
 
-    void draw(DrawContainer &);
+	void drawRect(const Rect &r);
+
+	void draw(DrawContainer &);
 
 };
 

@@ -14,12 +14,11 @@ std::ostream& operator<<(std::ostream &os, const Camera &camera)
 }
 */
 
-DrawContainer::DrawContainer()
-{}
 
-void DrawContainer::add(Rect r)
+
+void DrawContainer::add(DrawItem d)
 {
-	this->rect = r;
+	this->objs.push_back(d);
 }
 
 void center(Rect &rect, const Point &point)
@@ -32,10 +31,6 @@ Point center(const Rect &rect)
 	return {0, 0};
 }
 
-Camera::Camera()
-:Camera(nullptr)
-{}
-
 Camera::Camera(SDL_Window *window)
 :window(window), vp{0, 0, 800, 600}, screenrect{0, 0, 800, 600}, render(nullptr)
 {
@@ -47,6 +42,14 @@ Camera::Camera(SDL_Window *window)
 		SDL_GetWindowSize(window, &w, &h);
 		screenrect.w = w;
 		screenrect.h = h;
+	}
+}
+
+Camera::~Camera()
+{
+	for(auto it: this->textures)
+	{
+		SDL_DestroyTexture(it.second);
 	}
 }
 
@@ -103,7 +106,24 @@ void Camera::drawRect(const Rect &r)
 
 void Camera::draw(DrawContainer &dc)
 {	
-	SDL_Rect r = dc.rect;
-	SDL_SetRenderDrawColor(this->render, 0xFF, 0xFF, 0xFF, 0xFF);
-	SDL_RenderDrawRect(this->render, &r);
+	SDL_Texture *texture;
+	SDL_Surface *surface;
+
+	for(auto it: dc.objs)
+	{
+		if(!this->textures[it.texturename])
+		{
+			std::cout << "loading texture" << std::endl;
+			surface = IMG_Load(("resources/sprites/"+it.texturename).c_str());
+
+			texture = SDL_CreateTextureFromSurface(this->render, surface);
+			this->textures[it.texturename] = texture;
+
+			SDL_FreeSurface(surface);
+		}
+		else
+			texture = this->textures[it.texturename];
+
+		SDL_RenderCopy(this->render, texture, nullptr, &it.rect);
+	}
 }

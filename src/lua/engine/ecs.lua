@@ -15,7 +15,10 @@ function ECS.new()
 	self.currUid = 1
 	self.openUids = {}
 	self.components = {}
+	self.beginsystems = {}
 	self.systems = {}
+	self.endsystems = {}
+	self.drawsystems = {}
 
 	setmetatable(self.components, comp_mt)
 	return self
@@ -70,19 +73,22 @@ function ECS:addBeginSystem(name, func)
 	self.systems[name] = func
 end
 
--- TODO: sort on priorities
 function ECS:addSystem(name, func)
 	self.systems[name] = func
+end
+
+function ECS:addSystems(systems)
+	for name, func in pairs(systems) do
+		self:addSystem(name, func)
+	end
 end
 
 function ECS:addEndSystem(name, func)
 	self.systems[name] = func
 end
 
-function ECS:addSystems(arg)
-	for name, func in pairs(arg) do
-		self:addSystem(name, func)
-	end
+function ECS:addDrawSystem(name, func)
+	self.drawsystems[name] = func
 end
 
 function ECS:removeSystem(name)
@@ -96,9 +102,24 @@ function ECS:clearSystems()
 end
 
 function ECS:update(dt, input)
+	for name, func in pairs(self.beginsystems) do
+		func(self, dt, input)
+	end
+
 	for name, func in pairs(self.systems) do
 		func(self, dt, input)
 	end
-end 
+
+	for name, func in pairs(self.endsystems) do
+		func(self, dt, input)
+	end
+end
+
+function ECS:draw(drawcontainer)
+	for name, func in pairs(self.drawsystems) do
+		func(self, drawcontainer)
+	end
+end
 
 return ECS
+
