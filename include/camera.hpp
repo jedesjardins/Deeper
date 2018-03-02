@@ -15,7 +15,9 @@ typedef SDL_Rect Rect;
 struct DrawItem
 {
 	std::string texturename;
-	Rect rect;
+	unsigned frame;
+	unsigned totalframes;
+	Rect destrect; //only holds position
 };
 
 class DrawContainer

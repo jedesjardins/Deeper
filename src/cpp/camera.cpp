@@ -42,6 +42,7 @@ Camera::Camera(SDL_Window *window)
 		SDL_GetWindowSize(window, &w, &h);
 		screenrect.w = w;
 		screenrect.h = h;
+		std::cout << w << " " << h << std::endl;
 	}
 }
 
@@ -109,8 +110,12 @@ void Camera::draw(DrawContainer &dc)
 	SDL_Texture *texture;
 	SDL_Surface *surface;
 
+	// world points
+	Rect world_dims = dc.dim;
+
 	for(auto it: dc.objs)
-	{
+	{	
+		// get texture
 		if(!this->textures[it.texturename])
 		{
 			std::cout << "loading texture" << std::endl;
@@ -124,6 +129,32 @@ void Camera::draw(DrawContainer &dc)
 		else
 			texture = this->textures[it.texturename];
 
-		SDL_RenderCopy(this->render, texture, nullptr, &it.rect);
+		//get size of image
+		uint32_t format;
+		int access;
+		int w, h;
+		SDL_QueryTexture(texture, &format, &access, &w, &h);
+
+		w /= it.totalframes;
+		int framex = (it.frame -1) * w;
+		
+		Rect frame{framex, 0, w, h};
+
+		//scale output
+		it.destrect.w *= w;
+		it.destrect.h *= h;
+
+		// translate dest rect to 
+		Rect renderRect;
+		renderRect.w = it.destrect.w * (((float)this->screenrect.w)/world_dims.w);
+		renderRect.h = it.destrect.h * (((float)this->screenrect.h)/world_dims.h);
+		//			      --   translate world position   --        -- translate output size --
+		renderRect.x = world_dims.x + (.5 * this->screenrect.w) + it.destrect.x - (.5 * renderRect.w);
+		renderRect.y = world_dims.y + (.5 * this->screenrect.h) - it.destrect.y - (.5 * renderRect.h);
+
+		//std::cout << renderRect.x << " " << renderRect.y << " " 
+		//		<< renderRect.w << " " << renderRect.h << std::endl;
+
+		SDL_RenderCopy(this->render, texture, &frame, &renderRect);
 	}
 }

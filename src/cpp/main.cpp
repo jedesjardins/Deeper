@@ -26,7 +26,9 @@ void registerUsertypes(sol::state &lua)
 
 	lua.new_usertype<DrawItem>("DrawItem",
 		"texturename", &DrawItem::texturename,
-		"rect", &DrawItem::rect
+		"frame", &DrawItem::frame,
+		"frames", &DrawItem::totalframes,
+		"destrect", &DrawItem::destrect
 		);
 
 	lua.new_usertype<DrawContainer>("DrawContainer",
