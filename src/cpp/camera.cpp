@@ -14,7 +14,15 @@ std::ostream& operator<<(std::ostream &os, const Camera &camera)
 }
 */
 
-
+SDL_Rect Rect::convert()
+{
+	return SDL_Rect{
+		(int)floor(this->x), 
+		(int)floor(this->y),
+		(int)floor(this->w),
+		(int)floor(this->h)
+		};
+}
 
 void DrawContainer::add(DrawItem d)
 {
@@ -32,7 +40,7 @@ Point center(const Rect &rect)
 }
 
 Camera::Camera(SDL_Window *window)
-:window(window), vp{0, 0, 800, 600}, screenrect{0, 0, 800, 600}, render(nullptr)
+:window(window), screenrect{0, 0, 800, 600}, render(nullptr)
 {
 	if(window)
 	{
@@ -42,7 +50,6 @@ Camera::Camera(SDL_Window *window)
 		SDL_GetWindowSize(window, &w, &h);
 		screenrect.w = w;
 		screenrect.h = h;
-		std::cout << w << " " << h << std::endl;
 	}
 }
 
@@ -52,41 +59,6 @@ Camera::~Camera()
 	{
 		SDL_DestroyTexture(it.second);
 	}
-}
-
-void Camera::position(const Point &position)
-{
-	center(this->vp, position);
-}
-
-Point Camera::position()
-{
-	return {0, 0};
-}
-
-void Camera::dimension(const Point &size)
-{
-
-}
-
-Point Camera::dimension()
-{
-	return {0, 0};
-}
-
-void Camera::viewport(const Rect &vp)
-{
-	this->vp = vp;
-}
-
-Rect Camera::viewport()
-{
-	return this->vp;
-}
-
-double Camera::getScale()
-{
-	return 0.0;
 }
 
 void Camera::clear()
@@ -100,25 +72,20 @@ void Camera::push()
 	SDL_RenderPresent(this->render);
 }
 
-void Camera::drawRect(const Rect &r)
-{
-
-}
-
 void Camera::draw(DrawContainer &dc)
 {	
 	SDL_Texture *texture;
 	SDL_Surface *surface;
 
 	// world points
-	Rect world_dims = dc.dim;
+	Rect viewport = dc.dim;
 
 	for(auto it: dc.objs)
 	{	
 		// get texture
 		if(!this->textures[it.texturename])
 		{
-			std::cout << "loading texture" << std::endl;
+			std::cout << "loading texture: " << it.texturename << std::endl;
 			surface = IMG_Load(("resources/sprites/"+it.texturename).c_str());
 
 			texture = SDL_CreateTextureFromSurface(this->render, surface);
@@ -138,19 +105,19 @@ void Camera::draw(DrawContainer &dc)
 		w /= it.totalframes;
 		int framex = (it.frame -1) * w;
 		
-		Rect frame{framex, 0, w, h};
+		SDL_Rect frame{framex, 0, w, h};
 
 		//scale output
 		it.destrect.w *= w;
 		it.destrect.h *= h;
 
 		// translate dest rect to 
-		Rect renderRect;
-		renderRect.w = it.destrect.w * (((float)this->screenrect.w)/world_dims.w);
-		renderRect.h = it.destrect.h * (((float)this->screenrect.h)/world_dims.h);
+		SDL_Rect renderRect;
+		renderRect.w = it.destrect.w * (((float)this->screenrect.w)/viewport.w);
+		renderRect.h = it.destrect.h * (((float)this->screenrect.h)/viewport.h);
 		//			      --   translate world position   --        -- translate output size --
-		renderRect.x = world_dims.x + (.5 * this->screenrect.w) + it.destrect.x - (.5 * renderRect.w);
-		renderRect.y = world_dims.y + (.5 * this->screenrect.h) - it.destrect.y - (.5 * renderRect.h);
+		renderRect.x = viewport.x + (.5 * this->screenrect.w) + it.destrect.x - (.5 * renderRect.w);
+		renderRect.y = viewport.y + (.5 * this->screenrect.h) - it.destrect.y - (.5 * renderRect.h);
 
 		//std::cout << renderRect.x << " " << renderRect.y << " " 
 		//		<< renderRect.w << " " << renderRect.h << std::endl;

@@ -24,6 +24,39 @@ function ECS.new()
 	return self
 end
 
+function ECS:requireAll(...)
+	local argc = select("#", ...)
+
+	if argc < 1 then return {} end
+
+	for i = 1, argc do
+		local comp = select(i, ...)
+		if #comp < 1 then return {} end
+	end
+
+	local entities = {}
+	local first_require = self.components[select(1, ...)]
+
+	for uid, _ in pairs(first_require) do
+		local is_present = true
+
+		for i = 2, argc do
+			if not self.components[select(i, ...)][uid] then
+				is_present = false
+				break
+			end
+		end
+
+		if is_present then table.insert(entities, uid) end
+	end
+	
+	return entities
+end
+
+function ECS:requireAny(...)
+
+end
+
 function ECS:addEntity(entity)
 	-- get a unique uid
 	local uid = 0

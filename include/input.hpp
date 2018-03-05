@@ -10,9 +10,9 @@
 
 struct KEYSTATE {
 	int NONE = 0;
-	int PRESSED = 1;
-	int HELD = 2;
-	int RELEASED = 3;
+	int RELEASED = 1;
+	int PRESSED = 2;
+	int HELD = 3;
 };
 
 class Input

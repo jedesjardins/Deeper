@@ -7,6 +7,10 @@ STATE = require(LUA_FOLDER .. 'engine.state')		-- state class
 
 math.randomseed(os.time())
 
+function math.sign(x)
+  return (x < 0 and -1) or (x > 0 and 1) or 0
+end
+
 KS = KEYSTATE.new()
 
 local input = Input.new()
@@ -14,7 +18,10 @@ local input = Input.new()
 local practicestate = require(LUA_FOLDER .. 'states.practicestate')
 
 function update(dt, drawcontainer)
-	local is_running = practicestate:update(dt, input)
+
+	local is_running = input:update()
+
+	is_running = is_running and practicestate:update(dt, input)
 
 	practicestate:draw(drawcontainer)
 
