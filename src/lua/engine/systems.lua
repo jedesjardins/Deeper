@@ -1,79 +1,73 @@
 local systems = {
-	
 	controlMovement = function(ecs, dt, input)
-		entities = ecs:requireAll("control", "movement")
+		entities = ecs:requireAll("control", "movement", "animate")
 
 		for _, id in ipairs(entities) do
 			local control = ecs.components.control[id]
 			local movement = ecs.components.movement[id]
+			local anim = ecs.components.animate[id]
 
-			local pdx, pdy = movement.dx, movement.dy
+			-- update movement and check directions
 			movement.dx, movement.dy = 0, 0
+			local directions = {}
+			local was_moving = movement.is_moving
 
 			if input:getKeyState("W") == KS.HELD
 				or input:getKeyState("W") == KS.PRESSED then
-				movement.dy = movement.dy + math.floor(dt/6)
+				movement.dy = movement.dy + 3*dt/1000 --math.floor(4.0/(1000.0/dt))
+				table.insert(directions, "up")
 			end
 			if input:getKeyState("S") == KS.HELD
 				or input:getKeyState("S") == KS.PRESSED then
-				movement.dy = movement.dy - math.floor(dt/6)
+				movement.dy = movement.dy - 3*dt/1000
+				table.insert(directions, "down")
 			end
 			if input:getKeyState("A") == KS.HELD
 				or input:getKeyState("A") == KS.PRESSED then
-				movement.dx = movement.dx - math.floor(dt/6)
+				movement.dx = movement.dx - 3*dt/1000
+				table.insert(directions, "left")
 			end
 			if input:getKeyState("D") == KS.HELD
 				or input:getKeyState("D") == KS.PRESSED then
-				movement.dx = movement.dx + math.floor(dt/6)
+				movement.dx = movement.dx + 3*dt/1000
+				table.insert(directions, "right")
 			end
 
-			movement.changed = false
+			if movement.dy ~= 0 or movement.dx ~= 0 then
+				movement.is_moving = true
+			else
+				movement.is_moving = false
+			end
 
-			-- no movement
-			if movement.dx == 0 and movement.dy == 0 then
-				if movement.direction.x or movement.direction.y then
-					movement.changed = true
-				end
-
-				movement.direction.x = nil
-				movement.direction.y = nil
-
-			-- if there was no previous motion
-			else if movement.direction.x == nil and movement.direction.y == nil then
-				if movement.dx ~= 0 then
-					movement.direction.x = movement.dx
-					movement.changed = true
-				else if movement.dy ~= 0 then
-					movement.direction.y = movement.dy
-					movement.changed = true
-				end end
-
-			-- if there was previous motion
-			-- check if there is still motion
-			else if movement.direction.x then 
-				if math.sign(movement.direction.x) == math.sign(movement.dx) then
+			-- check if direction changed
+			movement.changed = true
+			for _, direction in ipairs(directions) do
+				if direction == movement.direction then
 					movement.changed = false
-				else
-					movement.changed = true
-					movement.direction.x = nil
-
-					if movement.dy ~= 0 then
-						movement.direction.y = movement.dy
-					end
+					break
 				end
+			end
 
-			else if movement.direction.y then 
-				if math.sign(movement.direction.y) == math.sign(movement.dy) then
-					movement.changed = false
+			-- change direction
+			if movement.changed and movement.is_moving then
+				movement.direction = directions[1]
+			end
+
+			-- if the direction changed or you start moving again
+			if movement.changed or movement.is_moving ~= was_moving then
+				if movement.is_moving then
+					-- start animation
+					anim.img = anim.img_name..movement.direction..".png"
+					anim.animate = true
+					anim.frame = 2
+					anim.time = ((1000.0 * anim.looptime) / anim.frames)
 				else
-					movement.changed = true
-					movement.direction.y = nil
-
-					if movement.dx ~= 0 then
-						movement.direction.x = movement.dx
-					end
+					-- stop animation
+					anim.animate = false
+					anim.frame = 1
+					anim.time = 0
 				end
-			end end end end
+			end
 		end
 	end,
 
@@ -89,43 +83,87 @@ local systems = {
 		end	
 	end,
 
-	updateSize = function(ecs, dt, input)
-		local sizecomps = ecs.components["size"]
+	collisions = function(ecs, dt, input)
+		entities = ecs:requireAll("position", "collision")
 
-		for i, size in pairs(sizecomps) do
-			if input:getKeyState("Up") == KS.HELD
-				or input:getKeyState("Up") == KS.PRESSED then
-				size.w = size.w + math.floor(dt/4)
-				size.h = size.h + math.floor(dt/4)
-			end
-			if input:getKeyState("Down") == KS.HELD
-				or input:getKeyState("Down") == KS.PRESSED then
-				size.w = size.w - math.floor(dt/4)
-				size.h = size.h - math.floor(dt/4)
+		local r1, r2 = Rect.new(), Rect.new()
+
+		local collision_pairs = {}
+
+		for _, id in ipairs(entities) do
+			local pos_id = ecs.components.position[id]
+			local col_id = ecs.components.collision[id]
+
+			r1.x = pos_id.x - col_id.w/2
+			r1.y = pos_id.y - col_id.h/2
+			r1.w = col_id.w
+			r1.h = col_id.h
+
+			for _, id2 in ipairs(entities) do
+				if id ~= id2 then
+					local pos_id2 = ecs.components.position[id2]
+					local col_id2 = ecs.components.collision[id2]
+
+					r2.x = pos_id2.x - col_id2.w/2
+					r2.y = pos_id2.y - col_id2.h/2
+					r2.w = col_id2.w
+					r2.h = col_id2.h
+
+					if r1:collide(r2) then
+
+						local mov_id = ecs.components.movement[id]
+						local mov_id2 = ecs.components.movement[id2]
+
+						local p1, p2 = Point.new(), Point.new()
+
+						-- if id and id2 moved
+						if mov_id and mov_id2 and mov_id.is_moving and mov_id2.is_moving then
+							r1:resolveBoth(r2, p1, p2)
+
+							pos_id.x, pos_id.y = p1.x, p1.y
+							pos_id2.x, pos_id2.y = p2.x, p2.y
+
+						-- id moved
+						else if mov_id and mov_id.is_moving then
+							r1:resolve(r2, p1)
+
+							pos_id.x, pos_id.y = p1.x, p1.y
+
+						-- id2 moved
+						else if mov_id2 and mov_id2.is_moving then
+							r2:resolve(r1, p2)
+
+							pos_id2.x, pos_id2.y = p2.x, p2.y
+
+						else 
+							r1:resolveBoth(r2, p1, p2)
+
+							pos_id.x, pos_id.y = p1.x, p1.y
+							pos_id2.x, pos_id2.y = p2.x, p2.y
+							
+						end end end
+
+						
+					end
+				end
 			end
 		end
+		
+		for _, pair in ipairs(collision_pairs) do
+			local pos1 = ecs.components.position[pair[1]]
+			local pos2 = ecs.components.position[pair[2]]
+
+			local col1 = ecs.components.collision[pair[1]]
+			local col2 = ecs.components.collision[pair[2]]
+			-- more
+		end
+		
 	end,
 
 	updateAnimations = function(ecs, dt, input)
 		local animcomps = ecs.components["animate"]
 
 		for i, anim in pairs(animcomps) do
-			--[[
-			if input:getKeyState("P") == KS.PRESSED then
-				anim.frame = 1
-				anim.animate = not anim.animate
-				anim.time = 0
-			end
-
-			if input:getKeyState("Right") == KS.PRESSED then
-				anim.looptime = anim.looptime + .1
-			end
-
-			if input:getKeyState("Left") == KS.PRESSED then
-				anim.looptime = anim.looptime - .1
-			end
-			]]
-
 			if anim.animate then
 				anim.time = (anim.time or 0) + dt
 				if anim.time > ((1000.0 * anim.looptime * anim.frame) / anim.frames) then

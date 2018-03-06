@@ -17,11 +17,19 @@ const int SCREEN_HEIGHT = 480;
 
 void registerUsertypes(sol::state &lua)
 {
+	lua.new_usertype<Point>("Point",
+		"x", &Point::x,
+		"y", &Point::y
+		);
+
 	lua.new_usertype<Rect>("Rect",
 		"x", &Rect::x,
 		"y", &Rect::y,
 		"w", &Rect::w,
-		"h", &Rect::h
+		"h", &Rect::h,
+		"collide", &Rect::collide,
+		"resolve", &Rect::resolve,
+		"resolveBoth", &Rect::resolveBoth
 		);
 
 	lua.new_usertype<DrawItem>("DrawItem",

@@ -24,19 +24,145 @@ SDL_Rect Rect::convert()
 		};
 }
 
+std::vector<Point> getPoints(const Rect &r)
+{
+	std::vector<Point> points;
+
+	points.push_back({r.x - r.w/2, r.y - r.h/2});
+	points.push_back({r.x + r.w/2, r.y - r.h/2});
+	points.push_back({r.x - r.w/2, r.y + r.h/2});
+	points.push_back({r.x + r.w/2, r.y + r.h/2});
+	points.push_back({r.x, r.y - r.h/2});
+	points.push_back({r.x, r.y + r.h/2});
+	points.push_back({r.x - r.w/2, r.y});
+	points.push_back({r.x + r.w/2, r.y});
+
+	return points;
+}
+
+bool Rect::collide(const Rect &r2)
+{
+	Rect &r1 = *this;
+
+	std::vector<Point> points = getPoints(r2);
+
+	for(auto it = points.begin(); it != points.end(); ++it)
+	{
+		if(it->x > r1.x - r1.w/2
+			&& it->x < r1.x + r1.w/2
+			&& it->y > r1.y - r1.h/2
+			&& it->y < r1.y + r1.h/2)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void calculateOverlap(const Rect &r1, const Rect &r2, double &overlap_x, double &overlap_y)
+{
+	if(r1.x < r2.x)
+	{
+		overlap_x = (r1.x + r1.w/2) - (r2.x - r2.w/2);
+	}
+	else
+	{
+		overlap_x = (r2.x + r2.w/2) - (r1.x - r1.w/2);
+	}
+
+	if(r1.y < r2.y)
+	{
+		overlap_y = (r1.y + r1.h/2) - (r2.y - r2.h/2);
+	}
+	else
+	{
+		overlap_y = (r2.y + r2.h/2) - (r1.y - r1.h/2);
+	}
+}
+
+void Rect::resolveBoth(const Rect &r2, Point &p1, Point &p2)
+{
+	Rect &r1 = *this;
+
+	//calculate overlap in each dimension
+	double overlap_x, overlap_y;
+
+	calculateOverlap(r1, r2, overlap_x, overlap_y);
+
+	if (overlap_x < overlap_y)
+	{
+		//undo x motion
+		if(r1.x < r2.x)
+		{
+			p1.x = r1.x + r1.w/2 - overlap_x/2;
+			p2.x = r2.x + r2.w/2 + overlap_x/2;
+		}
+		else
+		{
+			p1.x = r1.x + r1.w/2 + overlap_x/2;
+			p2.x = r2.x + r2.w/2 - overlap_x/2;
+		}
+		p1.y = r1.y + r1.h/2;
+		p2.y = r2.y + r2.h/2;
+	}
+	else
+	{
+		//undo y motion
+		if(r1.y < r2.y)
+		{
+			p1.y = r1.y + r1.h/2 - overlap_y/2;
+			p2.y = r2.y + r2.h/2 + overlap_y/2;
+		}
+		else
+		{
+			p1.y = r1.y + r1.h/2 + overlap_y/2;
+			p2.y = r2.y + r2.h/2 - overlap_y/2;
+		}
+		p1.x = r1.x + r1.w/2;
+		p2.x = r2.x + r2.w/2;
+	}
+}
+
+void Rect::resolve(const Rect &r2, Point &p)
+{
+	Rect &r1 = *this;
+
+	double overlap_x, overlap_y;
+
+	calculateOverlap(r1, r2, overlap_x, overlap_y);
+
+	if (overlap_x < overlap_y)
+	{
+		//undo x motion
+		if(r1.x < r2.x)
+		{
+			p.x = r1.x + r1.w/2 - overlap_x;
+		}
+		else
+		{
+			p.x = r1.x + r1.w/2 + overlap_x;
+		}
+		p.y = r1.y + r1.h/2;
+	}
+	else
+	{
+		//undo y motion
+		if(r1.y < r2.y)
+		{
+			p.y = r1.y + r1.h/2 - overlap_y;
+		}
+		else
+		{
+			p.y = r1.y + r1.h/2 + overlap_y;
+		}
+		p.x = r1.x + r1.w/2;
+	}
+}
+
 void DrawContainer::add(DrawItem d)
 {
 	this->objs.push_back(d);
-}
-
-void center(Rect &rect, const Point &point)
-{
-
-}
-
-Point center(const Rect &rect)
-{
-	return {0, 0};
 }
 
 Camera::Camera(SDL_Window *window)
@@ -85,7 +211,7 @@ void Camera::draw(DrawContainer &dc)
 		// get texture
 		if(!this->textures[it.texturename])
 		{
-			std::cout << "loading texture: " << it.texturename << std::endl;
+			//std::cout << "loading texture: " << it.texturename << std::endl;
 			surface = IMG_Load(("resources/sprites/"+it.texturename).c_str());
 
 			texture = SDL_CreateTextureFromSurface(this->render, surface);
@@ -113,14 +239,19 @@ void Camera::draw(DrawContainer &dc)
 
 		// translate dest rect to 
 		SDL_Rect renderRect;
-		renderRect.w = it.destrect.w * (((float)this->screenrect.w)/viewport.w);
-		renderRect.h = it.destrect.h * (((float)this->screenrect.h)/viewport.h);
-		//			      --   translate world position   --        -- translate output size --
-		renderRect.x = viewport.x + (.5 * this->screenrect.w) + it.destrect.x - (.5 * renderRect.w);
-		renderRect.y = viewport.y + (.5 * this->screenrect.h) - it.destrect.y - (.5 * renderRect.h);
+		double scalex = (((double)this->screenrect.w)/(viewport.w*TILE_SIZE));
+		double scaley = (((double)this->screenrect.h)/(viewport.h*TILE_SIZE));
 
-		//std::cout << renderRect.x << " " << renderRect.y << " " 
-		//		<< renderRect.w << " " << renderRect.h << std::endl;
+		renderRect.w = it.destrect.w * scalex;
+		renderRect.h = it.destrect.h * scaley;
+
+		renderRect.x = -1*viewport.x*TILE_SIZE*scalex  + (.5 * this->screenrect.w) 
+						+ it.destrect.x*TILE_SIZE*scalex 
+						- (.5 * renderRect.w);
+
+		renderRect.y = viewport.y*TILE_SIZE*scaley + (.5 * this->screenrect.h) 
+						- it.destrect.y*TILE_SIZE*scaley 
+						- (.5 * renderRect.h);
 
 		SDL_RenderCopy(this->render, texture, &frame, &renderRect);
 	}

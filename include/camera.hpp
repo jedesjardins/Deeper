@@ -10,7 +10,12 @@
 #include <string>
 #include <cmath>
 
-typedef std::pair<double, double> Point;
+#define TILE_SIZE 16
+
+struct Point{
+	double x;
+	double y;
+};
 
 struct Rect{
 	double x;
@@ -19,6 +24,9 @@ struct Rect{
 	double h;
 
 	SDL_Rect convert();
+	bool collide(const Rect&);
+	void resolve(const Rect&, Point&);
+	void resolveBoth(const Rect&, Point&, Point&);
 };
 
 struct DrawItem

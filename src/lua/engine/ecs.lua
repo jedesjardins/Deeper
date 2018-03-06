@@ -103,21 +103,21 @@ function ECS:clearEntities()
 end
 
 function ECS:addBeginSystem(name, func)
-	self.systems[name] = func
+	table.insert(self.beginsystems, func)
 end
 
 function ECS:addSystem(name, func)
-	self.systems[name] = func
+	table.insert(self.systems, func)
+end
+
+function ECS:addEndSystem(name, func)
+	table.insert(self.endsystems, func)
 end
 
 function ECS:addSystems(systems)
 	for name, func in pairs(systems) do
 		self:addSystem(name, func)
 	end
-end
-
-function ECS:addEndSystem(name, func)
-	self.systems[name] = func
 end
 
 function ECS:addDrawSystem(name, func)
@@ -135,15 +135,15 @@ function ECS:clearSystems()
 end
 
 function ECS:update(dt, input)
-	for name, func in pairs(self.beginsystems) do
+	for index, func in ipairs(self.beginsystems) do
 		func(self, dt, input)
 	end
 
-	for name, func in pairs(self.systems) do
+	for index, func in ipairs(self.systems) do
 		func(self, dt, input)
 	end
 
-	for name, func in pairs(self.endsystems) do
+	for index, func in ipairs(self.endsystems) do
 		func(self, dt, input)
 	end
 end
