@@ -35,6 +35,7 @@ struct DrawItem
 	unsigned frame;
 	unsigned totalframes;
 	Rect destrect; //only holds position
+	Rect colrect;
 };
 
 class DrawContainer
@@ -69,5 +70,7 @@ public:
 
 
 };
+
+void calculateCollisionOut(const Rect &);
 
 #endif

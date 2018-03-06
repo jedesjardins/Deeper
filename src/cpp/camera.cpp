@@ -132,31 +132,37 @@ void Rect::resolve(const Rect &r2, Point &p)
 
 	calculateOverlap(r1, r2, overlap_x, overlap_y);
 
-	if (overlap_x < overlap_y)
+	//std::cout << r1.x << " " << r1.w << " " << r2.x << " " << r2.w << "\n";
+
+	//std::cout << overlap_x << " " << overlap_y << std::endl;
+
+	//TODO(James): THIS IS A SLOPPY FIX FOR INTERNAL EDGES
+	if(overlap_x == overlap_y)
+		overlap_x -= 0.0001;
+	
+	if(overlap_x < overlap_y)
 	{
-		//undo x motion
 		if(r1.x < r2.x)
 		{
-			p.x = r1.x + r1.w/2 - overlap_x;
+			p.x = r1.x - overlap_x;
 		}
 		else
 		{
-			p.x = r1.x + r1.w/2 + overlap_x;
+			p.x = r1.x + overlap_x;
 		}
-		p.y = r1.y + r1.h/2;
+		p.y = r1.y;
 	}
 	else
 	{
-		//undo y motion
 		if(r1.y < r2.y)
 		{
-			p.y = r1.y + r1.h/2 - overlap_y;
+			p.y = r1.y - overlap_y;
 		}
 		else
 		{
-			p.y = r1.y + r1.h/2 + overlap_y;
+			p.y = r1.y + overlap_y;
 		}
-		p.x = r1.x + r1.w/2;
+		p.x = r1.x;
 	}
 }
 
@@ -238,21 +244,76 @@ void Camera::draw(DrawContainer &dc)
 		it.destrect.h *= h;
 
 		// translate dest rect to 
-		SDL_Rect renderRect;
+		Rect renderRect;
 		double scalex = (((double)this->screenrect.w)/(viewport.w*TILE_SIZE));
 		double scaley = (((double)this->screenrect.h)/(viewport.h*TILE_SIZE));
 
 		renderRect.w = it.destrect.w * scalex;
 		renderRect.h = it.destrect.h * scaley;
 
-		renderRect.x = -1*viewport.x*TILE_SIZE*scalex  + (.5 * this->screenrect.w) 
-						+ it.destrect.x*TILE_SIZE*scalex 
-						- (.5 * renderRect.w);
+		renderRect.x = -1*viewport.x*TILE_SIZE*scalex  + (.5 * this->screenrect.w) //get viewport translation to screen
+						+ it.destrect.x*TILE_SIZE*scalex 						//add position
+						- (.5 * renderRect.w);								//subtract half the width
 
 		renderRect.y = viewport.y*TILE_SIZE*scaley + (.5 * this->screenrect.h) 
 						- it.destrect.y*TILE_SIZE*scaley 
 						- (.5 * renderRect.h);
 
-		SDL_RenderCopy(this->render, texture, &frame, &renderRect);
+		SDL_Rect out{(int)renderRect.x, (int)renderRect.y, (int)renderRect.w, (int)renderRect.h};
+
+		SDL_RenderCopy(this->render, texture, &frame, &out);
+
+
+		Rect renderCol;
+
+		renderCol.w = it.colrect.w * scalex * TILE_SIZE;
+		renderCol.h = it.colrect.h * scaley * TILE_SIZE;
+
+		renderCol.x = -1*viewport.x*TILE_SIZE*scalex + (.5 * this->screenrect.w)
+					+ it.colrect.x*TILE_SIZE*scalex
+					- (.5 * renderCol.w);
+
+		renderCol.y = viewport.y*TILE_SIZE*scaley + (.5 * this->screenrect.h) 
+					- it.colrect.y*TILE_SIZE*scaley 
+					- (.5 * renderCol.h);
+
+		SDL_Rect col{(int)renderCol.x, (int)renderCol.y, (int)renderCol.w, (int)renderCol.h};
+
+		SDL_Rect c, ul, ur, ll, lr;
+
+
+		c.x = col.x+col.w/2; c.y = col.y+col.h/2; c.w = 1; c.h = 1;
+		ul.x = col.x; ul.y = col.y; ul.w = 1; ul.h = 1;
+		ur.x = col.x+col.w; ur.y = col.y; ur.w = 1; ur.h = 1;
+		ll.x = col.x; ll.y = col.y+col.h; ll.w = 1; ll.h = 1;
+		lr.x = col.x+col.w; lr.y = col.y+col.h; lr.w = 1; lr.h = 1;
+
+		SDL_SetRenderDrawColor(this->render, 0x00, 0xFF, 0x00, 0xFF);
+
+		SDL_RenderFillRect(this->render, &c);
+		SDL_RenderFillRect(this->render, &ul);
+		SDL_RenderFillRect(this->render, &ur);
+		SDL_RenderFillRect(this->render, &ll);
+		SDL_RenderFillRect(this->render, &lr);
 	}
+}
+
+void calculateCollisionOut(const Rect &collision)
+{
+	SDL_Rect renderRect;
+
+	int w, h;
+
+	w = ((double)collision.w)*16;
+	h = ((double)collision.h)*16;
+
+	double scalex = (((double)640)/(20*16));
+	double scaley = (((double)480)/(15*16));
+
+	renderRect.w = w * scalex;
+	renderRect.h = h * scaley;
+
+	renderRect.x = 320 + collision.x*16*scalex  - (.5 * renderRect.w);
+
+	renderRect.y = 240 - collision.y*16*scaley - (.5 * renderRect.h);
 }

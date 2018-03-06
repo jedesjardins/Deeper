@@ -17,6 +17,8 @@ const int SCREEN_HEIGHT = 480;
 
 void registerUsertypes(sol::state &lua)
 {
+	lua["calculateCollisionOut"] = calculateCollisionOut;
+
 	lua.new_usertype<Point>("Point",
 		"x", &Point::x,
 		"y", &Point::y
@@ -36,7 +38,8 @@ void registerUsertypes(sol::state &lua)
 		"texturename", &DrawItem::texturename,
 		"frame", &DrawItem::frame,
 		"frames", &DrawItem::totalframes,
-		"destrect", &DrawItem::destrect
+		"destrect", &DrawItem::destrect,
+		"colrect", &DrawItem::colrect
 		);
 
 	lua.new_usertype<DrawContainer>("DrawContainer",

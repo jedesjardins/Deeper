@@ -18,6 +18,8 @@ struct KEYSTATE {
 class Input
 {
 public:
+	int x = 0;
+	int y = 0;
 	std::unordered_map<std::string, int> keystates;
 
 	bool update();

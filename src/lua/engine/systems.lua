@@ -14,22 +14,22 @@ local systems = {
 
 			if input:getKeyState("W") == KS.HELD
 				or input:getKeyState("W") == KS.PRESSED then
-				movement.dy = movement.dy + 3*dt/1000 --math.floor(4.0/(1000.0/dt))
+				movement.dy = movement.dy + 4*dt/1000 --math.floor(4.0/(1000.0/dt))
 				table.insert(directions, "up")
 			end
 			if input:getKeyState("S") == KS.HELD
 				or input:getKeyState("S") == KS.PRESSED then
-				movement.dy = movement.dy - 3*dt/1000
+				movement.dy = movement.dy - 4*dt/1000
 				table.insert(directions, "down")
 			end
 			if input:getKeyState("A") == KS.HELD
 				or input:getKeyState("A") == KS.PRESSED then
-				movement.dx = movement.dx - 3*dt/1000
+				movement.dx = movement.dx - 4*dt/1000
 				table.insert(directions, "left")
 			end
 			if input:getKeyState("D") == KS.HELD
 				or input:getKeyState("D") == KS.PRESSED then
-				movement.dx = movement.dx + 3*dt/1000
+				movement.dx = movement.dx + 4*dt/1000
 				table.insert(directions, "right")
 			end
 
@@ -94,23 +94,26 @@ local systems = {
 			local pos_id = ecs.components.position[id]
 			local col_id = ecs.components.collision[id]
 
-			r1.x = pos_id.x - col_id.w/2
-			r1.y = pos_id.y - col_id.h/2
+			r1.x = pos_id.x	+ col_id.offx/2
+			r1.y = pos_id.y + col_id.offy/2
 			r1.w = col_id.w
 			r1.h = col_id.h
+
+			calculateCollisionOut(r1)
 
 			for _, id2 in ipairs(entities) do
 				if id ~= id2 then
 					local pos_id2 = ecs.components.position[id2]
 					local col_id2 = ecs.components.collision[id2]
 
-					r2.x = pos_id2.x - col_id2.w/2
-					r2.y = pos_id2.y - col_id2.h/2
+					r2.x = pos_id2.x + col_id2.offx/2
+					r2.y = pos_id2.y + col_id2.offy/2
 					r2.w = col_id2.w
 					r2.h = col_id2.h
 
 					if r1:collide(r2) then
 
+						print(id, id2)
 						local mov_id = ecs.components.movement[id]
 						local mov_id2 = ecs.components.movement[id2]
 
@@ -120,21 +123,28 @@ local systems = {
 						if mov_id and mov_id2 and mov_id.is_moving and mov_id2.is_moving then
 							r1:resolveBoth(r2, p1, p2)
 
-							pos_id.x, pos_id.y = p1.x, p1.y
-							pos_id2.x, pos_id2.y = p2.x, p2.y
+							pos_id.x, pos_id.y = p1.x - col_id.offx/2, p1.y - col_id.offy/2
+							pos_id2.x, pos_id2.y = p2.x - col_id2.offx/2, p2.y - col_id2.offy/2
 
 						-- id moved
 						else if mov_id and mov_id.is_moving then
 							r1:resolve(r2, p1)
 
-							pos_id.x, pos_id.y = p1.x, p1.y
+							-- pos_id.x, pos_id.y = p1.x, p1.y
+							print(pos_id.x, pos_id.y)
+							pos_id.x, pos_id.y = p1.x - col_id.offx/2, p1.y - col_id.offy/2
+							print(pos_id.x, pos_id.y)
+							print()
 
 						-- id2 moved
 						else if mov_id2 and mov_id2.is_moving then
 							r2:resolve(r1, p2)
 
-							pos_id2.x, pos_id2.y = p2.x, p2.y
-
+							-- pos_id2.x, pos_id2.y = p2.x, p2.y
+							print(pos_id2.x, pos_id2.y)
+							print(p2.x, p2.y)
+							pos_id2.x, pos_id2.y = p2.x - col_id2.offx/2, p2.y - col_id2.offy/2
+							print()
 						else 
 							r1:resolveBoth(r2, p1, p2)
 
@@ -180,20 +190,44 @@ local systems = {
 	draw = function(ecs, drawcontainer)
 
 		local entities = ecs:requireAll("animate", "position", "size")
+		local drawItems = {}
 
 		for _, id in ipairs(entities) do
 			local dest = Rect.new()
+			local col = Rect.new()
 			local di = DrawItem.new()
 
 			dest.x, dest.y = ecs.components["position"][id]["x"], ecs.components["position"][id]["y"]
 			dest.w, dest.h = ecs.components["size"][id]["w"], ecs.components["size"][id]["h"]
+			col.x = ecs.components["position"][id]["x"] + ecs.components["collision"][id]["offx"]/2
+			col.y = ecs.components["position"][id]["y"] + ecs.components["collision"][id]["offy"]/2
+			col.w, col.h = ecs.components["collision"][id]["w"], ecs.components["collision"][id]["h"]
 
 			di.texturename = ecs.components["animate"][id]["img"]
 			di.frame = ecs.components["animate"][id]["frame"]
 			di.frames = ecs.components["animate"][id]["frames"]
 			di.destrect = dest
-			drawcontainer:add(di)
+			di.colrect = col
+
+			local z = dest.y - dest.h/2;
+
+			table.insert(drawItems, {z, di})
+			--drawcontainer:add(di)
 		end
+
+		for i, v in ipairs(drawItems) do
+			print(v[1], v[2])
+		end
+
+		local sortfunc = function (a, b) return a[1] > b[1] end
+
+		
+		table.sort(drawItems, sortfunc)
+
+		for i, v in ipairs(drawItems) do
+			drawcontainer:add(v[2])
+		end
+
 	end
 }
 

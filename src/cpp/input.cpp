@@ -36,6 +36,11 @@ bool Input::update()
 			if(event.key.keysym.sym == SDLK_ESCAPE)
 				running &= false;
 		}
+		else if(event.type == SDL_MOUSEMOTION)
+		{
+			this->x = event.motion.x;
+			this->y = event.motion.y;
+		}
 	}
 
 	return running;
