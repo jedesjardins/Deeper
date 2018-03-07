@@ -1,5 +1,6 @@
 
 #include "input.hpp"
+#include <iostream>
 
 bool Input::update()
 {
@@ -26,6 +27,7 @@ bool Input::update()
 			if(event.type == SDL_KEYDOWN 
 				&& Input::getKeyState(SDL_GetKeyName(event.key.keysym.sym)) != KS.HELD)
 			{
+				//std::cout << SDL_GetKeyName(event.key.keysym.sym) << std::endl;
 				this->keystates[SDL_GetKeyName(event.key.keysym.sym)] = KS.PRESSED;
 			}
 			else if(event.type == SDL_KEYUP)

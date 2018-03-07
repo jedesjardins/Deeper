@@ -3,114 +3,22 @@ local state = STATE.new()
 
 state.ecs = ECS:new()
 local systems = require(LUA_FOLDER .. 'engine.systems')
+local entities = require(LUA_FOLDER .. 'engine.entities')
 
 state.ecs:addBeginSystem("controls", systems.controlMovement)
 state.ecs:addSystem("position", systems.updatePosition)
 state.ecs:addSystem("collide", systems.collisions)
+state.ecs:addSystem("hitbox", systems.hitbox)
 state.ecs:addEndSystem("animate", systems.updateAnimations)
 state.ecs:addDrawSystem("draw", systems.draw)
 
-state.ecs:addEntity({
-		control = {},
-		position = {x = 0, y = 0},
-		movement = {
-			dx = 0,
-			dy = 0,
-			direction = "down",
-			is_moving = false,
-			changed = false
-		},
-		collision = {
-			offx = 0,
-			offy = -0.1875,
-			w = .75,
-			h = 1
-		},
-		size = {w = 1, h = 1},
-		animate = {
-			img_name = "man_",
-			img = "man_down.png",
-			frame = 1,
-			frames = 4,
-			animate = true,
-			looptime = .8,
-			defaulttime = .8
-		}
-	})
-
-state.ecs:addEntity({
-		position = {x = -1, y = 0},
-		movement = {
-			dx = 0,
-			dy = 0,
-			direction = "down",
-			is_moving = false,
-			changed = false
-		},
-		collision = {
-			offx = 0,
-			offy = -0.1875,
-			w = .75,
-			h = 1
-		},
-		size = {w = 1, h = 1},
-		animate = {
-			img_name = "man_",
-			img = "man_down.png",
-			frame = 1,
-			frames = 4,
-			animate = false,
-			looptime = .8,
-			defaulttime = .8
-		}
-	})
-
-
-for i=1, 3 do
-	state.ecs:addEntity({
-			position = {x = 2, y = i},
-			size = {w = 1, h = 1},
-			collision = {
-				offx = 0,
-				offy = 0,
-				w = 1,
-				h = 1
-			},
-			animate = {
-				img_name = "guy_",
-				img = "guy_down.png",
-				frame = 1,
-				frames = 4,
-				animate = false,
-				looptime = 1,
-				defaulttime = 1
-			}
-		})
-end
-
-for i=1, 3 do
-	state.ecs:addEntity({
-			position = {x = i, y = -3},
-			size = {w = 1, h = 1},
-			collision = {
-				offx = 0,
-				offy = 0,
-				w = 1,
-				h = 1
-			},
-			animate = {
-				img_name = "guy_",
-				img = "guy_down.png",
-				frame = 1,
-				frames = 4,
-				animate = false,
-				looptime = 1,
-				defaulttime = 1
-			}
-		})
-end
-
-
+local id1 = state.ecs:addEntity(entities.player)
+state.ecs:addComponent(id1, "control", {up = "W", down = "S", left = "A", right = "D",
+										attack = "Space",
+										lockdirection = "Left Shift"})
+local id2 = state.ecs:addEntity(entities.player)
+state.ecs.components.position[id2].x = 2
+--state.ecs:addEntity(entities.block)
 
 local viewport = {
 	dim = Rect.new()

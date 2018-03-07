@@ -9,6 +9,18 @@ local comp_mt = {
 	end
 }
 
+local function deepcopy(val)
+	if type(val) == "table" then
+		local t = {}
+		for k, v in pairs(val) do
+			t[k] = deepcopy(v)
+		end
+		return t
+	else
+		return val
+	end
+end
+
 function ECS.new()
 	local self = setmetatable({}, ECS)
 
@@ -70,8 +82,14 @@ function ECS:addEntity(entity)
 	-- for each component in entity, store it
 	for comp, values in pairs(entity) do
 		local components = self.components[comp]
-		components[uid] = values
+		components[uid] = deepcopy(values)
 	end
+
+	return uid
+end
+
+function ECS:addComponent(id, name, comp)
+	self.components[name][id] = deepcopy(comp)
 end
 
 function ECS:addEntities(...)

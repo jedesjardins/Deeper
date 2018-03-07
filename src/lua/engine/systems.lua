@@ -1,41 +1,75 @@
 local systems = {
 	controlMovement = function(ecs, dt, input)
-		entities = ecs:requireAll("control", "movement", "animate")
+		entities = ecs:requireAll("control", "movement", "animate", "position", "state")
 
 		for _, id in ipairs(entities) do
 			local control = ecs.components.control[id]
+			local position = ecs.components.position[id]
 			local movement = ecs.components.movement[id]
 			local anim = ecs.components.animate[id]
+			local state = ecs.components.state[id]
+
+			-- spawn hitbox
+			if input:getKeyState(control.attack) == KS.PRESSED then
+				state.action = "attack"
+				local hitx, hity, hitw, hith = 0, 0, 1, 1
+				local collision = ecs.components.collision[id] or {offx = 0, offy = 0, w = 1, h = 1}
+
+				if movement.direction == "up" then
+					hitx = position.x
+					hity = position.y + hith/2 + collision.h/2 + collision.offy
+				else if movement.direction == "down" then
+					hitx = position.x
+					hity = position.y - hith/2 - collision.h/2 + collision.offy
+				else if movement.direction == "left" then
+					hitx = position.x - hitw/2 - collision.w/2 + collision.offx
+					hity = position.y
+				else if movement.direction == "right" then
+					hitx = position.x + hitw/2 + collision.w/2 + collision.offx
+					hity = position.y
+				end end end end
+
+
+				ecs:addEntity({
+						hitbox = {
+							parent = id,
+							x = hitx,
+							y = hity,
+							w = 1,
+							h = 1
+						}})
+			end
 
 			-- update movement and check directions
 			movement.dx, movement.dy = 0, 0
 			local directions = {}
 			local was_moving = movement.is_moving
 
-			if input:getKeyState("W") == KS.HELD
-				or input:getKeyState("W") == KS.PRESSED then
+			if input:getKeyState(control.up) == KS.HELD
+				or input:getKeyState(control.up) == KS.PRESSED then
 				movement.dy = movement.dy + 4*dt/1000 --math.floor(4.0/(1000.0/dt))
 				table.insert(directions, "up")
 			end
-			if input:getKeyState("S") == KS.HELD
-				or input:getKeyState("S") == KS.PRESSED then
+			if input:getKeyState(control.down) == KS.HELD
+				or input:getKeyState(control.down) == KS.PRESSED then
 				movement.dy = movement.dy - 4*dt/1000
 				table.insert(directions, "down")
 			end
-			if input:getKeyState("A") == KS.HELD
-				or input:getKeyState("A") == KS.PRESSED then
+			if input:getKeyState(control.left) == KS.HELD
+				or input:getKeyState(control.left) == KS.PRESSED then
 				movement.dx = movement.dx - 4*dt/1000
 				table.insert(directions, "left")
 			end
-			if input:getKeyState("D") == KS.HELD
-				or input:getKeyState("D") == KS.PRESSED then
+			if input:getKeyState(control.right) == KS.HELD
+				or input:getKeyState(control.right) == KS.PRESSED then
 				movement.dx = movement.dx + 4*dt/1000
 				table.insert(directions, "right")
 			end
-
-			if input:getKeyState("Space") == KS.PRESSED then
-				print("Space")
+			if input:getKeyState(control.lockdirection) >= KS.PRESSED then
+				table.insert(directions, movement.direction)
 			end
+
+			
 
 			if movement.dy ~= 0 or movement.dx ~= 0 then
 				movement.is_moving = true
@@ -61,6 +95,7 @@ local systems = {
 			if movement.changed or movement.is_moving ~= was_moving then
 				if movement.is_moving then
 					-- start animation
+					--TODO(James): add in state name to load asset
 					anim.img = anim.img_name..movement.direction..".png"
 					anim.animate = true
 					anim.frame = 2
@@ -72,6 +107,7 @@ local systems = {
 					anim.time = 0
 				end
 			end
+			print(state.action)
 		end
 	end,
 
@@ -87,8 +123,40 @@ local systems = {
 		end	
 	end,
 
+	hitbox = function(ecs, dt, input)
+		local hitboxs = ecs:requireAll("hitbox")
+		local entities = ecs:requireAll("position", "collision")
+
+		for _, hid in ipairs(hitboxs) do
+			local hitbox = ecs.components.hitbox[hid]
+			local hrect = Rect.new()
+			hrect.x = hitbox.x
+			hrect.y = hitbox.y
+			hrect.w = hitbox.w
+			hrect.h = hitbox.h
+
+			for _, eid in ipairs(entities) do
+				if eid ~= hitbox.parent then
+					local pos_id = ecs.components.position[eid]
+					local col_id = ecs.components.collision[eid]
+					local crect = Rect.new()
+
+					crect.x = pos_id.x	+ col_id.offx/2
+					crect.y = pos_id.y + col_id.offy/2
+					crect.w = col_id.w
+					crect.h = col_id.h
+
+					if hrect:collide(crect) then
+						print(hid, "collides with", eid)
+					end
+				end
+			end
+			ecs:removeEntity(hid)
+		end
+	end,
+
 	collisions = function(ecs, dt, input)
-		entities = ecs:requireAll("position", "collision")
+		local entities = ecs:requireAll("position", "collision")
 
 		local r1, r2 = Rect.new(), Rect.new()
 
@@ -102,8 +170,6 @@ local systems = {
 			r1.y = pos_id.y + col_id.offy/2
 			r1.w = col_id.w
 			r1.h = col_id.h
-
-			calculateCollisionOut(r1)
 
 			for _, id2 in ipairs(entities) do
 				if id ~= id2 then
@@ -185,7 +251,7 @@ local systems = {
 
 	draw = function(ecs, drawcontainer)
 
-		local entities = ecs:requireAll("animate", "position", "size")
+		local entities = ecs:requireAll("animate", "position")
 		local drawItems = {}
 
 		for _, id in ipairs(entities) do
@@ -194,7 +260,7 @@ local systems = {
 			local di = DrawItem.new()
 
 			dest.x, dest.y = ecs.components["position"][id]["x"], ecs.components["position"][id]["y"]
-			dest.w, dest.h = ecs.components["size"][id]["w"], ecs.components["size"][id]["h"]
+			dest.w, dest.h = ecs.components["position"][id]["sx"], ecs.components["position"][id]["sy"]
 			col.x = ecs.components["position"][id]["x"] + ecs.components["collision"][id]["offx"]/2
 			col.y = ecs.components["position"][id]["y"] + ecs.components["collision"][id]["offy"]/2
 			col.w, col.h = ecs.components["collision"][id]["w"], ecs.components["collision"][id]["h"]
