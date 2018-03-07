@@ -95,32 +95,32 @@ void Rect::resolveBoth(const Rect &r2, Point &p1, Point &p2)
 		//undo x motion
 		if(r1.x < r2.x)
 		{
-			p1.x = r1.x + r1.w/2 - overlap_x/2;
-			p2.x = r2.x + r2.w/2 + overlap_x/2;
+			p1.x = r1.x - overlap_x/2;
+			p2.x = r2.x + overlap_x/2;
 		}
 		else
 		{
-			p1.x = r1.x + r1.w/2 + overlap_x/2;
-			p2.x = r2.x + r2.w/2 - overlap_x/2;
+			p1.x = r1.x + overlap_x/2;
+			p2.x = r2.x - overlap_x/2;
 		}
-		p1.y = r1.y + r1.h/2;
-		p2.y = r2.y + r2.h/2;
+		p1.y = r1.y;
+		p2.y = r2.y;
 	}
 	else
 	{
 		//undo y motion
 		if(r1.y < r2.y)
 		{
-			p1.y = r1.y + r1.h/2 - overlap_y/2;
-			p2.y = r2.y + r2.h/2 + overlap_y/2;
+			p1.y = r1.y - overlap_y/2;
+			p2.y = r2.y + overlap_y/2;
 		}
 		else
 		{
-			p1.y = r1.y + r1.h/2 + overlap_y/2;
-			p2.y = r2.y + r2.h/2 - overlap_y/2;
+			p1.y = r1.y + overlap_y/2;
+			p2.y = r2.y - overlap_y/2;
 		}
-		p1.x = r1.x + r1.w/2;
-		p2.x = r2.x + r2.w/2;
+		p1.x = r1.x;
+		p2.x = r2.x;
 	}
 }
 

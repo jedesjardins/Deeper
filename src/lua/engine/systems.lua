@@ -33,6 +33,10 @@ local systems = {
 				table.insert(directions, "right")
 			end
 
+			if input:getKeyState("Space") == KS.PRESSED then
+				print("Space")
+			end
+
 			if movement.dy ~= 0 or movement.dx ~= 0 then
 				movement.is_moving = true
 			else
@@ -113,7 +117,6 @@ local systems = {
 
 					if r1:collide(r2) then
 
-						print(id, id2)
 						local mov_id = ecs.components.movement[id]
 						local mov_id2 = ecs.components.movement[id2]
 
@@ -131,28 +134,21 @@ local systems = {
 							r1:resolve(r2, p1)
 
 							-- pos_id.x, pos_id.y = p1.x, p1.y
-							print(pos_id.x, pos_id.y)
 							pos_id.x, pos_id.y = p1.x - col_id.offx/2, p1.y - col_id.offy/2
-							print(pos_id.x, pos_id.y)
-							print()
 
 						-- id2 moved
 						else if mov_id2 and mov_id2.is_moving then
 							r2:resolve(r1, p2)
 
 							-- pos_id2.x, pos_id2.y = p2.x, p2.y
-							print(pos_id2.x, pos_id2.y)
-							print(p2.x, p2.y)
 							pos_id2.x, pos_id2.y = p2.x - col_id2.offx/2, p2.y - col_id2.offy/2
-							print()
 						else 
 							r1:resolveBoth(r2, p1, p2)
 
-							pos_id.x, pos_id.y = p1.x, p1.y
-							pos_id2.x, pos_id2.y = p2.x, p2.y
+							pos_id.x, pos_id.y = p1.x - col_id.offx/2, p1.y - col_id.offy/2
+							pos_id2.x, pos_id2.y = p2.x - col_id2.offx/2, p2.y - col_id2.offy/2
 							
 						end end end
-
 						
 					end
 				end
@@ -215,13 +211,8 @@ local systems = {
 			--drawcontainer:add(di)
 		end
 
-		for i, v in ipairs(drawItems) do
-			print(v[1], v[2])
-		end
-
 		local sortfunc = function (a, b) return a[1] > b[1] end
-
-		
+	
 		table.sort(drawItems, sortfunc)
 
 		for i, v in ipairs(drawItems) do

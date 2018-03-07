@@ -59,7 +59,7 @@ state.ecs:addEntity({
 			img = "man_down.png",
 			frame = 1,
 			frames = 4,
-			animate = true,
+			animate = false,
 			looptime = .8,
 			defaulttime = .8
 		}
