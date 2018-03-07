@@ -9,14 +9,18 @@ state.ecs:addBeginSystem("controls", systems.controlMovement)
 state.ecs:addSystem("position", systems.updatePosition)
 state.ecs:addSystem("collide", systems.collisions)
 state.ecs:addSystem("hitbox", systems.hitbox)
+state.ecs:addSystem("attack", systems.attack)
 state.ecs:addEndSystem("animate", systems.updateAnimations)
-state.ecs:addDrawSystem("draw", systems.draw)
+state.ecs:addDrawSystem("draw", systems.drawWithCollisions)
 
 local id1 = state.ecs:addEntity(entities.player)
 state.ecs:addComponent(id1, "control", {up = "W", down = "S", left = "A", right = "D",
 										attack = "Space",
-										lockdirection = "Left Shift"})
+										lockdirection = "Left Shift", interact = "Return"})
 local id2 = state.ecs:addEntity(entities.player)
+state.ecs:addComponent(id2, "control", {up = "I", down = "K", left = "J", right = "L",
+										attack = "U",
+										lockdirection = "Right Shift", interact = "Return"})
 state.ecs.components.position[id2].x = 2
 --state.ecs:addEntity(entities.block)
 

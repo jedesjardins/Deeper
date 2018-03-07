@@ -82,6 +82,7 @@ int main( int argc, char* args[] )
 
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_Window *window = nullptr;
+	SDL_Renderer *render = nullptr;
 	SDL_Surface *screenSurface = nullptr;
 
 
@@ -91,8 +92,10 @@ int main( int argc, char* args[] )
 							SCREEN_WIDTH,
 							SCREEN_HEIGHT,
 							SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
+
+	render = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
 	
-	Camera camera{window};
+	Camera camera{window, render};
 	Clock frames_lock{};
 
 	bool running = true;

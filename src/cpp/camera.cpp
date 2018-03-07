@@ -171,18 +171,15 @@ void DrawContainer::add(DrawItem d)
 	this->objs.push_back(d);
 }
 
-Camera::Camera(SDL_Window *window)
-:window(window), screenrect{0, 0, 800, 600}, render(nullptr)
+Camera::Camera(SDL_Window *window, SDL_Renderer *render)
+:window(window), screenrect{0, 0, 800, 600}, render(render)
 {
-	if(window)
-	{
-		this->render = SDL_CreateRenderer(this->window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
+	SDL_SetRenderDrawBlendMode(this->render, SDL_BLENDMODE_BLEND);
 
-		int32_t w, h;
-		SDL_GetWindowSize(window, &w, &h);
-		screenrect.w = w;
-		screenrect.h = h;
-	}
+	int32_t w, h;
+	SDL_GetWindowSize(window, &w, &h);
+	screenrect.w = w;
+	screenrect.h = h;
 }
 
 Camera::~Camera()
@@ -263,6 +260,8 @@ void Camera::draw(DrawContainer &dc)
 
 		SDL_RenderCopy(this->render, texture, &frame, &out);
 
+		//draw collision box corners/center
+		//std::cout << it.colrect.w << " " << it.colrect.h << std::endl;
 
 		Rect renderCol;
 
@@ -279,22 +278,45 @@ void Camera::draw(DrawContainer &dc)
 
 		SDL_Rect col{(int)renderCol.x, (int)renderCol.y, (int)renderCol.w, (int)renderCol.h};
 
-		SDL_Rect c, ul, ur, ll, lr;
+		SDL_SetRenderDrawColor(this->render, 0x00, 0xFF, 0x00, 0x44);
+
+		SDL_RenderFillRect(this->render, &col);
 
 
-		c.x = col.x+col.w/2; c.y = col.y+col.h/2; c.w = 1; c.h = 1;
-		ul.x = col.x; ul.y = col.y; ul.w = 1; ul.h = 1;
-		ur.x = col.x+col.w; ur.y = col.y; ur.w = 1; ur.h = 1;
-		ll.x = col.x; ll.y = col.y+col.h; ll.w = 1; ll.h = 1;
-		lr.x = col.x+col.w; lr.y = col.y+col.h; lr.w = 1; lr.h = 1;
+		/*//draw collision points
+			Rect renderCol;
 
-		SDL_SetRenderDrawColor(this->render, 0x00, 0xFF, 0x00, 0xFF);
+			renderCol.w = it.colrect.w * scalex * TILE_SIZE;
+			renderCol.h = it.colrect.h * scaley * TILE_SIZE;
 
-		SDL_RenderFillRect(this->render, &c);
-		SDL_RenderFillRect(this->render, &ul);
-		SDL_RenderFillRect(this->render, &ur);
-		SDL_RenderFillRect(this->render, &ll);
-		SDL_RenderFillRect(this->render, &lr);
+			renderCol.x = -1*viewport.x*TILE_SIZE*scalex + (.5 * this->screenrect.w)
+						+ it.colrect.x*TILE_SIZE*scalex
+						- (.5 * renderCol.w);
+
+			renderCol.y = viewport.y*TILE_SIZE*scaley + (.5 * this->screenrect.h) 
+						- it.colrect.y*TILE_SIZE*scaley 
+						- (.5 * renderCol.h);
+
+			SDL_Rect col{(int)renderCol.x, (int)renderCol.y, (int)renderCol.w, (int)renderCol.h};
+
+			SDL_Rect c, ul, ur, ll, lr;
+
+
+			c.x = col.x+col.w/2; c.y = col.y+col.h/2; c.w = 1; c.h = 1;
+			ul.x = col.x; ul.y = col.y; ul.w = 1; ul.h = 1;
+			ur.x = col.x+col.w; ur.y = col.y; ur.w = 1; ur.h = 1;
+			ll.x = col.x; ll.y = col.y+col.h; ll.w = 1; ll.h = 1;
+			lr.x = col.x+col.w; lr.y = col.y+col.h; lr.w = 1; lr.h = 1;
+
+			SDL_SetRenderDrawColor(this->render, 0x00, 0xFF, 0x00, 0xFF);
+
+			SDL_RenderFillRect(this->render, &c);
+			SDL_RenderFillRect(this->render, &ul);
+			SDL_RenderFillRect(this->render, &ur);
+			SDL_RenderFillRect(this->render, &ll);
+			SDL_RenderFillRect(this->render, &lr);
+		*/
+		
 	}
 }
 

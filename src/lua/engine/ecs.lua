@@ -74,6 +74,7 @@ function ECS:addEntity(entity)
 	local uid = 0
 	if(#self.openUids ~= 0) then
 		uid = self.openUids[#self.openUids]
+		self.openUids[#self.openUids] = nil
 	else
 		uid = self.currUid
 		self.currUid = self.currUid + 1

@@ -23,7 +23,7 @@ local entities = {
 			img = "man_down.png",
 			frame = 1,
 			frames = 4,
-			animate = false,
+			animate = true,
 			looptime = .8,
 			defaulttime = .8
 		}

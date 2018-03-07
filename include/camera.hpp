@@ -57,7 +57,7 @@ private:
 	Rect screenrect;
 
 public:
-	Camera(SDL_Window *window);
+	Camera(SDL_Window *, SDL_Renderer *);
 
 	~Camera();
 
