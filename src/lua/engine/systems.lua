@@ -9,7 +9,7 @@ local systems = {
 			local anim = ecs.components.animate[id]
 			local state = ecs.components.state[id]
 
-			-- spawn hitbox
+			-- attack, spawn hitbox, do other things later
 			if input:getKeyState(control.attack) == KS.PRESSED then
 				state.action = "attack"
 				local hitx, hity, hitw, hith = 0, 0, 1, 1
@@ -38,6 +38,11 @@ local systems = {
 							w = 1,
 							h = 1
 						}})
+			end
+
+			-- interact
+			if input:getKeyState(control.interact) >= KS.PRESSED then
+				print("Interact")
 			end
 
 			-- update movement and check directions
