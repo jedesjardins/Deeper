@@ -34,6 +34,7 @@ struct DrawItem
 	std::string texturename;
 	unsigned frame;
 	unsigned totalframes;
+	double rotation;
 	Rect destrect; //only holds position
 	Rect colrect;
 };

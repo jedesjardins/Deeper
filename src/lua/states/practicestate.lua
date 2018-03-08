@@ -5,23 +5,28 @@ state.ecs = ECS:new()
 local systems = require(LUA_FOLDER .. 'engine.systems')
 local entities = require(LUA_FOLDER .. 'engine.entities')
 
-state.ecs:addBeginSystem("controls", systems.controlMovement)
+state.ecs:addBeginSystem("controls", systems.controls)
 state.ecs:addSystem("position", systems.updatePosition)
+state.ecs:addSystem("lockto", systems.lockto)
 state.ecs:addSystem("collide", systems.collisions)
-state.ecs:addSystem("hitbox", systems.hitbox)
 state.ecs:addSystem("attack", systems.attack)
+state.ecs:addSystem("hitbox", systems.hitbox)
 state.ecs:addEndSystem("animate", systems.updateAnimations)
 state.ecs:addDrawSystem("draw", systems.drawWithCollisions)
 
 local id1 = state.ecs:addEntity(entities.player)
 state.ecs:addComponent(id1, "control", {up = "W", down = "S", left = "A", right = "D",
 										attack = "Space",
-										lockdirection = "Left Shift", interact = "Return"})
+										lockdirection = "Left Shift", interact = "Return",
+										freeze_controls = "P", can_control = true})
 local id2 = state.ecs:addEntity(entities.player)
 state.ecs:addComponent(id2, "control", {up = "I", down = "K", left = "J", right = "L",
 										attack = "U",
-										lockdirection = "Right Shift", interact = "Return"})
+										lockdirection = "Right Shift", interact = "Return",
+										freeze_controls = "P", can_control = true})
 state.ecs.components.position[id2].x = 2
+
+local id3 = state.ecs:addEntity(entities.sword)
 --state.ecs:addEntity(entities.block)
 
 local viewport = {

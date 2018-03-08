@@ -1,7 +1,9 @@
 local entities = {
 	player = {
 		position = {x = 0, y = 0,
-					sx = 1, sy = 1},
+					sx = 1, sy = 1,
+					rotation = 0
+		},
 		movement = {
 			dx = 0,
 			dy = 0,
@@ -26,27 +28,77 @@ local entities = {
 			animate = true,
 			looptime = .8,
 			defaulttime = .8
-		}
-	},
-	block = {
-			position = {x = 0, y = 0,
-						sx = 1, sy = 1},
-			collision = {
-				offx = 0,
-				offy = 0,
-				w = 1,
-				h = 1
+		},
+		handloc = {
+			right = {
+				{0, -6/16},
+				{-2/16, -5/16},
+				{0, -6/16},
+				{3/16, -5/16}
 			},
-			animate = {
-				img_name = "guy_",
-				img = "guy_down.png",
-				frame = 1,
-				frames = 4,
-				animate = false,
-				looptime = 1,
-				defaulttime = 1
+			up = {
+				{5.5/16, -2/16},
+				{5.5/16, -4/16},
+				{5.5/16, 0/16},
+				{5/16, -2/16}
+			},
+			left = {
+				{0, -2/16},
+				{3/16, -1/16},
+				{0, -2/16},
+				{-2/16, -1/16}
+			},
+			down = {
+				{-5.5/16, -2/16},
+				{-5.5/16, 0/16},
+				{-5.5/16, -2/16},
+				{-5/16, -4/16}
 			}
 		}
+	},
+	sword = {
+		position = {x = 0, y = 0,
+					sx = 1, sy = 1,
+					rotation = 0
+		},
+		lockto = {
+			id = 1,
+			offx = 7/16,
+			offy = 0
+		},
+		animate = {
+			img_name = "sword",
+			img = "sword.png",
+			frame = 1,
+			frames = 1,
+			rotation = 0,
+			animate = false,
+			looptime = 1,
+			defaulttime = 1
+		}
+
+	},
+	block = {
+		position = {x = 0, y = 0,
+					sx = 1, sy = 1,
+					rotation = 0
+		},
+		collision = {
+			offx = 0,
+			offy = 0,
+			w = 1,
+			h = 1
+		},
+		animate = {
+			img_name = "guy_",
+			img = "guy_down.png",
+			frame = 1,
+			frames = 4,
+			animate = false,
+			looptime = 1,
+			defaulttime = 1
+		}
 	}
+}
 
 return entities

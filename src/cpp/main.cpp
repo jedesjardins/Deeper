@@ -39,7 +39,8 @@ void registerUsertypes(sol::state &lua)
 		"frame", &DrawItem::frame,
 		"frames", &DrawItem::totalframes,
 		"destrect", &DrawItem::destrect,
-		"colrect", &DrawItem::colrect
+		"colrect", &DrawItem::colrect,
+		"rotation", &DrawItem::rotation
 		);
 
 	lua.new_usertype<DrawContainer>("DrawContainer",

@@ -258,7 +258,7 @@ void Camera::draw(DrawContainer &dc)
 
 		SDL_Rect out{(int)renderRect.x, (int)renderRect.y, (int)renderRect.w, (int)renderRect.h};
 
-		SDL_RenderCopy(this->render, texture, &frame, &out);
+		SDL_RenderCopyEx(this->render, texture, &frame, &out, -1*it.rotation, nullptr, SDL_FLIP_NONE);
 
 		//draw collision box corners/center
 		//std::cout << it.colrect.w << " " << it.colrect.h << std::endl;
