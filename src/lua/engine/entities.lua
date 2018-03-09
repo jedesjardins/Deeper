@@ -162,7 +162,7 @@ local entities = {
 			}
 		},
 		position = {
-			x = 0, y = 0,
+			x = "$1", y = "$2",
 			w = 14/16, h = 19/16
 		},
 		movement = {
@@ -184,7 +184,7 @@ local entities = {
 	},
 	sword = {
 		position = {
-			x = 0, y = 2,
+			x = "$1", y = "$2",
 			w = 16/16, h = 5/16
 		},
 		collision = {
@@ -202,11 +202,14 @@ local entities = {
 			framesy = 1,
 			animate = false,
 			looptime = .8
+		},
+		pickup = {
+
 		}
 	},
 	block = {
 		position = {
-			x = 0, y = 2,
+			x = "$1", y = "$2",
 			w = 16/16, h = 5/16
 		},
 		collision = {

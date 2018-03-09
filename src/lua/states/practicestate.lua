@@ -14,12 +14,11 @@ state.ecs:addEndSystem(systems.updateSprite)
 state.ecs:addDrawSystem(systems.drawSprite)
 state.ecs:addDrawSystem(systems.drawHitboxes)
 
-state.ecs:addEntity(entities.man)
-state.ecs:addEntity(entities.sword)
+state.ecs:addEntity(entities.man, {0, 0})
+state.ecs:addEntity(entities.sword, {1, 0})
 
-local id2 = state.ecs:addEntity(entities.man)
+local id2 = state.ecs:addEntity(entities.man, {2, 2})
 state.ecs.components.control[id2] = nil
-state.ecs.components.position[id2].x = 2
 
 --[[
 state.ecs:addBeginSystem("controls", systems.controls)

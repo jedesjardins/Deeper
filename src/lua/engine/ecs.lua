@@ -9,16 +9,26 @@ local comp_mt = {
 	end
 }
 
-local function deepcopy(val)
+local function deepcopy(val, scratch)
 	if type(val) == "table" then
 		local t = {}
 		for k, v in pairs(val) do
-			t[k] = deepcopy(v)
+			t[k] = deepcopy(v, scratch)
 		end
 		return t
+	else if type(val) == "string" then
+		if #val > 1 and string.sub(val, 1, 1) == "$" then
+			local index = tonumber(string.sub(val, 2))
+			if not scratch[index] then 
+				print("Entity requires at least "..tostring(index).. " arguments to create.")
+			end
+			return scratch[index]
+		else
+			return val
+		end
 	else
 		return val
-	end
+	end end
 end
 
 function ECS.new()
@@ -105,7 +115,7 @@ function ECS:requireAny(...)
 
 end
 
-function ECS:addEntity(entity)
+function ECS:addEntity(entity, scratch)
 	-- get a unique uid
 	local uid = 0
 	if(#self.openUids ~= 0) then
@@ -119,23 +129,14 @@ function ECS:addEntity(entity)
 	-- for each component in entity, store it
 	for comp, values in pairs(entity) do
 		local components = self.components[comp]
-		components[uid] = deepcopy(values)
+		components[uid] = deepcopy(values, scratch or {})
 	end
 
 	return uid
 end
 
-function ECS:addComponent(id, name, comp)
-	self.components[name][id] = deepcopy(comp)
-end
-
-function ECS:addEntities(...)
-	local argc = select("#", ...)
-
-	for i = 1, argc do
-		local entity = select(i, ...)
-		self:addEntity(entity)
-	end
+function ECS:addComponent(id, name, comp, scratch)
+	self.components[name][id] = deepcopy(comp, scratch or {})
 end
 
 function ECS:removeEntity(uid)
