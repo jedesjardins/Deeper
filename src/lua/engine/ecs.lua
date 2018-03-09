@@ -36,6 +36,42 @@ function ECS.new()
 	return self
 end
 
+function ECS:requireAllBut(all, but)
+	if #all == 0 then return {} end
+	
+	but = but or {}
+
+	local entities = {}
+	local first_require = self.components[all[1]]
+
+	for uid, _ in pairs(first_require) do
+		local include = true
+
+		-- check components to have
+		for i = 2, #all do
+			if not self.components[all[i]][uid] then
+				include = false
+				break
+			end
+		end
+
+		if include then
+			-- check components not to have
+			for i = 1, #but do 
+				if self.components[but[i]][uid] then
+					include = false
+					break
+				end
+			end
+
+			if include then table.insert(entities, uid) end
+		end
+	end
+
+	return entities
+end
+
+
 function ECS:requireAll(...)
 	local argc = select("#", ...)
 
@@ -121,15 +157,15 @@ function ECS:clearEntities()
 	self.openUids = {}
 end
 
-function ECS:addBeginSystem(name, func)
+function ECS:addBeginSystem(func)
 	table.insert(self.beginsystems, func)
 end
 
-function ECS:addSystem(name, func)
+function ECS:addSystem(func)
 	table.insert(self.systems, func)
 end
 
-function ECS:addEndSystem(name, func)
+function ECS:addEndSystem(func)
 	table.insert(self.endsystems, func)
 end
 
@@ -139,8 +175,8 @@ function ECS:addSystems(systems)
 	end
 end
 
-function ECS:addDrawSystem(name, func)
-	self.drawsystems[name] = func
+function ECS:addDrawSystem(func)
+	table.insert(self.drawsystems, func)
 end
 
 function ECS:removeSystem(name)
@@ -168,7 +204,7 @@ function ECS:update(dt, input)
 end
 
 function ECS:draw(drawcontainer)
-	for name, func in pairs(self.drawsystems) do
+	for index, func in ipairs(self.drawsystems) do
 		func(self, drawcontainer)
 	end
 end

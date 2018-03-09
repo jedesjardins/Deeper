@@ -29,14 +29,33 @@ struct Rect{
 	void resolveBoth(const Rect&, Point&, Point&);
 };
 
-struct DrawItem
+struct DRAWITEMTYPE {
+	int NONE = 0;
+	int RECT = 1;
+	int SPRITE = 2;
+};
+
+struct DrawItemSprite
 {
 	std::string texturename;
-	unsigned frame;
-	unsigned totalframes;
+	unsigned framex;
+	unsigned framey;
+	unsigned totalframesx;
+	unsigned totalframesy;
 	double rotation;
-	Rect destrect; //only holds position
-	Rect colrect;
+	Rect dest;
+};
+
+struct DrawUnion
+{
+	Rect rect;
+	DrawItemSprite sprite;
+};
+
+struct DrawItem
+{
+	int type;
+	DrawUnion data;
 };
 
 class DrawContainer

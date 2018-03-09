@@ -34,13 +34,24 @@ void registerUsertypes(sol::state &lua)
 		"resolveBoth", &Rect::resolveBoth
 		);
 
+	lua.new_usertype<DrawItemSprite>("DrawItemSprite",
+		"texturename", &DrawItemSprite::texturename,
+		"framex", &DrawItemSprite::framex,
+		"framey", &DrawItemSprite::framey,
+		"totalframesx", &DrawItemSprite::totalframesx,
+		"totalframesy", &DrawItemSprite::totalframesy,
+		"dest", &DrawItemSprite::dest,
+		"rotation", &DrawItemSprite::rotation
+		);
+
+	lua.new_usertype<DrawUnion>("DrawUnion",
+		"rect", &DrawUnion::rect,
+		"sprite", &DrawUnion::sprite
+		);
+
 	lua.new_usertype<DrawItem>("DrawItem",
-		"texturename", &DrawItem::texturename,
-		"frame", &DrawItem::frame,
-		"frames", &DrawItem::totalframes,
-		"destrect", &DrawItem::destrect,
-		"colrect", &DrawItem::colrect,
-		"rotation", &DrawItem::rotation
+		"type", &DrawItem::type,
+		"data", &DrawItem::data
 		);
 
 	lua.new_usertype<DrawContainer>("DrawContainer",
