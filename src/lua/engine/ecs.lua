@@ -168,12 +168,6 @@ function ECS:addEndSystem(func)
 	table.insert(self.endsystems, func)
 end
 
-function ECS:addSystems(systems)
-	for name, func in pairs(systems) do
-		self:addSystem(name, func)
-	end
-end
-
 function ECS:addDrawSystem(func)
 	table.insert(self.drawsystems, func)
 end
@@ -189,6 +183,7 @@ function ECS:clearSystems()
 end
 
 function ECS:update(dt, input)
+
 	for index, func in ipairs(self.beginsystems) do
 		func(self, dt, input)
 	end

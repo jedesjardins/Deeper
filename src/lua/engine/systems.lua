@@ -531,6 +531,9 @@ local systems = {
 						offy = 0,
 						w = 1,
 						h = 1
+					},
+					hitbox = {
+						ignore_id = nil
 					}
 				})
 			time = 0
@@ -548,17 +551,22 @@ local systems = {
 		end	
 	end,
 
-	updateCollisions = function(ecs, dt, input)
-		local entities = ecs:requireAll("position", "collision")
+	updateMovementCollisions = function(ecs, dt, input)
+		-- handle colliding entities that aren't items or hitboxes
+		local entities = ecs:requireAllBut({"position", "collision"}, {"holdable", "hitbox"})
 
+		-- initialize locals only once
 		local r1, r2 = Rect.new(), Rect.new()
-
-		local collision_pairs = {}
+		local p1, p2 = Point.new(), Point.new()
+		local pos_id, pos_id2 = 0, 0
+		local col_id, col_id2 = 0, 0
+		local mov_id, mov_id2 = 0, 0
 
 		for i = 1, 4 do
 		for _, id in ipairs(entities) do
-			local pos_id = ecs.components.position[id]
-			local col_id = ecs.components.collision[id]
+			pos_id = ecs.components.position[id]
+			col_id = ecs.components.collision[id]
+			mov_id = ecs.components.movement[id]
 
 			r1.x = pos_id.x	+ col_id.offx/2
 			r1.y = pos_id.y + col_id.offy/2
@@ -567,8 +575,9 @@ local systems = {
 
 			for _, id2 in ipairs(entities) do
 				if id ~= id2 then
-					local pos_id2 = ecs.components.position[id2]
-					local col_id2 = ecs.components.collision[id2]
+					pos_id2 = ecs.components.position[id2]
+					col_id2 = ecs.components.collision[id2]
+					mov_id2 = ecs.components.movement[id2]
 
 					r2.x = pos_id2.x + col_id2.offx/2
 					r2.y = pos_id2.y + col_id2.offy/2
@@ -576,11 +585,7 @@ local systems = {
 					r2.h = col_id2.h
 
 					if r1:collide(r2) then
-
-						local mov_id = ecs.components.movement[id]
-						local mov_id2 = ecs.components.movement[id2]
-
-						local p1, p2 = Point.new(), Point.new()
+						print(id, "collides with", id2)
 
 						-- if id and id2 moved
 						if mov_id and mov_id2 and mov_id.is_moving and mov_id2.is_moving then
@@ -593,14 +598,12 @@ local systems = {
 						else if mov_id and mov_id.is_moving then
 							r1:resolve(r2, p1)
 
-							-- pos_id.x, pos_id.y = p1.x, p1.y
 							pos_id.x, pos_id.y = p1.x - col_id.offx/2, p1.y - col_id.offy/2
 
 						-- id2 moved
 						else if mov_id2 and mov_id2.is_moving then
 							r2:resolve(r1, p2)
 
-							-- pos_id2.x, pos_id2.y = p2.x, p2.y
 							pos_id2.x, pos_id2.y = p2.x - col_id2.offx/2, p2.y - col_id2.offy/2
 						else
 							r1:resolveBoth(r2, p1, p2)
@@ -614,6 +617,97 @@ local systems = {
 			end
 		end
 		end	
+	end,
+
+	updateItemCollisions = function(ecs, dt, input)
+		local items = ecs:requireAll("holdable", "position", "collision")
+		-- Add some kind of inventory check to entities? Should hitboxes to damage to items?
+		local entities = ecs:requireAllBut({"position", "collision"}, {"hitbox"}) 
+
+		local r1, r2 = Rect.new(), Rect.new()
+		local p1, p2 = Point.new(), Point.new()
+		local pos_id, pos_id2 = 0, 0
+		local col_id, col_id2 = 0, 0
+
+		for _, id in ipairs(items) do
+			pos_id = ecs.components.position[id]
+			col_id = ecs.components.collision[id]
+
+			r1.x = pos_id.x	+ col_id.offx/2
+			r1.y = pos_id.y + col_id.offy/2
+			r1.w = col_id.w
+			r1.h = col_id.h
+
+			for _, id2 in ipairs(entities) do
+				if id ~= id2 then
+					pos_id2 = ecs.components.position[id2]
+					col_id2 = ecs.components.collision[id2]
+
+					r2.x = pos_id2.x + col_id2.offx/2
+					r2.y = pos_id2.y + col_id2.offy/2
+					r2.w = col_id2.w
+					r2.h = col_id2.h
+
+					if r1:collide(r2) then
+
+						if ecs.components.hand[id2] then
+							ecs.components.p_position[id] = ecs.components.position[id]
+							ecs.components.position[id] = nil
+							ecs.components.hand[id2].held_id = id
+						else if  ecs.components.holdable[id2] then
+							r1:resolveBoth(r2, p1, p2)
+
+							pos_id.x, pos_id.y = p1.x - col_id.offx/2, p1.y - col_id.offy/2
+							pos_id2.x, pos_id2.y = p2.x - col_id2.offx/2, p2.y - col_id2.offy/2
+						else
+							r1:resolve(r2, p1)
+
+							pos_id.x, pos_id.y = p1.x - col_id.offx/2, p1.y - col_id.offy/2
+						end end
+						
+
+						break
+					end
+				end
+			end
+		end
+	end,
+
+	updateHitboxCollisions = function(ecs, dt, input)
+		local hitboxes = ecs:requireAll("hitbox", "position", "collision")
+		local entities = ecs:requireAll("position", "collision")
+
+		local r1, r2 = Rect.new(), Rect.new()
+		local pos_id, pos_id2 = 0, 0
+		local col_id, col_id2 = 0, 0
+
+		for _, id in ipairs(hitboxes) do
+			pos_id = ecs.components.position[id]
+			col_id = ecs.components.collision[id]
+			hit_id = ecs.components.hitbox[id]
+
+			r1.x = pos_id.x	+ col_id.offx/2
+			r1.y = pos_id.y + col_id.offy/2
+			r1.w = col_id.w
+			r1.h = col_id.h
+
+			for _, id2 in ipairs(entities) do
+				if id ~= id2 and hit_id.ignore_id ~= id2 then
+					pos_id2 = ecs.components.position[id2]
+					col_id2 = ecs.components.collision[id2]
+					mov_id2 = ecs.components.movement[id2]
+
+					r2.x = pos_id2.x + col_id2.offx/2
+					r2.y = pos_id2.y + col_id2.offy/2
+					r2.w = col_id2.w
+					r2.h = col_id2.h
+
+					if r1:collide(r2) then
+						print(id, "hit", id2)
+					end
+				end
+			end
+		end
 	end,
 
 	updateSprite = function(ecs, dt, input)
@@ -670,10 +764,8 @@ local systems = {
 			di.type = 2
 			local dis = di.data.sprite
 
-
 			dis.dest.x, dis.dest.y = position.x, position.y
 			dis.dest.w, dis.dest.h = position.w, position.h
-
 
 			dis.texturename = sprite.img
 			dis.framex = sprite.framex
@@ -682,9 +774,75 @@ local systems = {
 			dis.totalframesy = sprite.framesy
 			dis.rotation = 0
 
-			local z = dis.dest.y - position.h/2
+			position.z = dis.dest.y - position.h/2
 
-			table.insert(drawItems, {z, di})
+			table.insert(drawItems, {position.z, di})
+		end
+
+		local hentities = ecs:requireAll("hand", "sprite", "position", "movement")
+
+		for _, id in ipairs(hentities) do
+			local position = ecs.components.position[id]
+			local movement = ecs.components.movement[id]
+			local hand = ecs.components.hand[id]
+
+			if hand.held_id then
+				local sprite = ecs.components.sprite[hand.held_id]
+				local p_pos = ecs.components.p_position[hand.held_id]
+				local holdable = ecs.components.holdable[hand.held_id]
+
+				local di = DrawItem.new()
+				di.type = 2
+				local dis = di.data.sprite
+
+
+				
+				local z = 0
+				local hand_offx = hand.handloc[ecs.components.sprite[id].framey][ecs.components.sprite[id].framex][1]
+				local hand_offy = hand.handloc[ecs.components.sprite[id].framey][ecs.components.sprite[id].framex][2]
+
+				print(sprite.framex, sprite.framey)
+
+
+				if movement.direction == "right" then
+					dis.rotation = 0
+					dis.dest.x = position.x + hand_offx - holdable.offx
+					dis.dest.y = position.y + hand_offy - holdable.offy
+					z = position.z - .1
+
+				else if movement.direction == "up" then
+					dis.rotation = 90
+					dis.dest.x = position.x + hand_offx - holdable.offy
+					dis.dest.y = position.y + hand_offy - holdable.offx
+					z = position.z + .1
+
+				else if movement.direction == "left" then
+					dis.rotation = 180
+					dis.dest.x = position.x + hand_offx + holdable.offx
+					dis.dest.y = position.y + hand_offy - holdable.offy
+
+					z = position.z + .1
+
+				else if movement.direction == "down" then
+					dis.rotation = 270
+					dis.dest.x = position.x + hand_offx - holdable.offy
+					dis.dest.y = position.y + hand_offy + holdable.offx
+
+					z = position.z - .1
+
+				end end end end
+
+				
+				dis.dest.w, dis.dest.h = p_pos.w, p_pos.h
+				dis.framex = sprite.framex
+				dis.framey = sprite.framey
+				dis.texturename = sprite.img
+				dis.totalframesx = sprite.framesx
+				dis.totalframesy = sprite.framesy
+
+				table.insert(drawItems, {z, di})
+
+			end
 		end
 
 		local sortfunc = function (a, b) return a[1] > b[1] end

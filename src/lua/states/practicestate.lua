@@ -8,14 +8,32 @@ local entities = require(LUA_FOLDER .. 'engine.entities')
 
 state.ecs:addBeginSystem(systems.controlEntity)
 state.ecs:addSystem(systems.updatePosition)
-state.ecs:addSystem(systems.createHitbox)
-state.ecs:addSystem(systems.updateCollisions)
+--state.ecs:addSystem(systems.createHitbox)
+state.ecs:addSystem(systems.updateMovementCollisions)
+state.ecs:addSystem(systems.updateItemCollisions)
+state.ecs:addSystem(systems.updateHitboxCollisions)
 state.ecs:addEndSystem(systems.updateSprite)
 state.ecs:addDrawSystem(systems.drawSprite)
 state.ecs:addDrawSystem(systems.drawHitboxes)
 
 state.ecs:addEntity(entities.man, {0, 0})
 state.ecs:addEntity(entities.sword, {1, 0})
+state.ecs:addEntity(entities.block, {-2, -2})
+
+state.ecs:addEntity({
+				position = {
+					x = -2, y = 0
+				},
+				collision = {
+					offx = 0,
+					offy = 0,
+					w = 1,
+					h = 1
+				},
+				hitbox = {
+					ignore_id = nil
+				}
+			})
 
 local id2 = state.ecs:addEntity(entities.man, {2, 2})
 state.ecs.components.control[id2] = nil

@@ -4,6 +4,7 @@ RESOURCE_FOLDER = "resources.data."
 ECS = require(LUA_FOLDER .. 'engine.ecs')			-- ECS class
 LEXICON = require(LUA_FOLDER .. 'engine.lexicon')	-- lexicon class
 STATE = require(LUA_FOLDER .. 'engine.state')		-- state class
+Debug = require(LUA_FOLDER .. 'engine.debug')		-- debug function
 
 math.randomseed(os.time())
 
@@ -14,6 +15,8 @@ end
 KS = KEYSTATE.new()
 
 local input = Input.new()
+
+Debug:setDefault(true)
 
 local practicestate = require(LUA_FOLDER .. 'states.practicestate')
 
