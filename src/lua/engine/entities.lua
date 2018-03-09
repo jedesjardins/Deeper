@@ -173,14 +173,24 @@ local entities = {
 			changed = false
 		},
 		state = {
-			action = "walk"
-
+			action = "walk",
+			time = 0,
+			actions = {
+				walk = {
+					length = .8,
+					end_transition = "walk"
+				},
+				attack = {
+					length = .4,
+					end_transition = "walk"
+				}
+			}
 		},
 		collision = {
 			offx = 0,
-			offy = -0.1875,
-			w = .75,
-			h = 1
+			offy = -0.3125,
+			w = 0.75,
+			h = 0.875
 		},
 		hand = {
 			held_id = nil,
@@ -200,32 +210,35 @@ local entities = {
 					{5.5/16, -4/16},
 					{5.5/16, 0/16},
 					{5/16, -2/16},
-					{3.5/16, 0},
-					{3.5/16, 0},
-					{3.5/16, 0},
-					{3.5/16, 0}
+					{2.5/16, 0},
+					{2.5/16, 0},
+					{2.5/16, 0},
+					{2.5/16, 0}
 				},
 				{ -- y = 3, facing right
 					{-1/16, -6/16},
 					{-2/16, -5/16},
 					{0, -6/16},
 					{3/16, -5/16},
-					{4/16, -5/16},
-					{4/16, -5/16},
-					{4/16, -5/16},
-					{4/16, -5/16}
+					{4/16, -3.5/16},
+					{4/16, -3.5/16},
+					{4/16, -3.5/16},
+					{4/16, -3.5/16}
 				},
 				{ -- y = 4, facing left
 					{0, -2/16},
 					{3/16, -1/16},
 					{0, -2/16},
 					{-2/16, -1/16},
-					{-3/16, 0},
-					{-3/16, 0},
-					{-3/16, 0},
-					{-3/16, 0}
+					{-4/16, -3.5/16},
+					{-4/16, -3.5/16},
+					{-4/16, -3.5/16},
+					{-4/16, -3.5/16}
 				}
 			}
+		},
+		effects = {
+			-- ex: burn = {duration = 1.1 (seconds), strength = ?} 
 		}
 	},
 	sword = {
@@ -281,6 +294,28 @@ local entities = {
 			framesy = 1,
 			animate = false,
 			looptime = .8
+		}
+	},
+	testhitbox = {
+		position = {
+			x = "$1", y = "$2"
+		},
+		collision = {
+			offx = 0,
+			offy = 0,
+			w = "$3",
+			h = "$4"
+		},
+		hitbox = {
+			ignore_id = nil,
+			-- effects are status effects like paralysis, burns, etc
+			effects = {
+				-- type = duration? strength?
+			},
+			-- straight damage
+			damage = {
+				-- type = amount
+			}
 		}
 	}
 }

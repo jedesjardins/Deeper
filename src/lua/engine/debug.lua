@@ -4,6 +4,16 @@ local Debug = {}
 Debug.modes = {}
 Debug.default = nil
 
+function print(...)
+	local n = select("#",...)
+	for i = 1,n do
+		local v = tostring(select(i,...))
+		io.write(v)
+		io.write(" ")
+	end
+	io.write("\n")
+end
+
 function Debug:write(mode, ...)
 	if Debug.modes[mode] or Debug.default then
 		io.write(mode..": ")

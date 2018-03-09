@@ -37,6 +37,7 @@ function ECS.new()
 	self.currUid = 1
 	self.openUids = {}
 	self.deleteUids = {}
+	self.presets = {}
 	self.components = {}
 	self.beginsystems = {}
 	self.systems = {}
@@ -116,7 +117,23 @@ function ECS:requireAny(...)
 
 end
 
-function ECS:addEntity(entity, scratch)
+function ECS:addPresets(entities)
+	for name, components in pairs(entities) do
+		self.presets[name] = components
+		self.presets[name].name = name
+	end
+end
+
+function ECS:addEntity(name, scratch)
+	local entity = self.presets[name]
+	if not entity then
+		print("No entity:", name)
+	end
+
+	return self:addEntityFromTable(entity, scratch)
+end
+
+function ECS:addEntityFromTable(entity, scratch)
 	-- get a unique uid
 	local uid = 0
 	if(#self.openUids ~= 0) then
@@ -203,6 +220,8 @@ function ECS:update(dt, input)
 			components[uid] = nil
 		end
 	end
+
+	self.deleteUids = {}
 end
 
 function ECS:draw(drawcontainer)

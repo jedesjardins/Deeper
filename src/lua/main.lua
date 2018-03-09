@@ -13,6 +13,7 @@ function math.sign(x)
 end
 
 KS = KEYSTATE.new()
+inf = 1/0
 
 local input = Input.new()
 
