@@ -262,6 +262,32 @@ local entities = {
 			animate = false,
 			looptime = .8
 		},
+		holdable = {
+			offx = -7/16,
+			offy = 0
+		}
+	},
+	wand = {
+		position = {
+			x = "$1", y = "$2", z = 0,
+			w = 5/16, h = 1/16
+		},
+		collision = {
+			offx = 0,
+			offy = 0,
+			w = 5/16,
+			h = 1/16
+		},
+		sprite = {
+			img = "wand.png",
+			scale = 1,
+			framex = 1,
+			framey = 1,
+			framesx = 1,
+			framesy = 1,
+			animate = false,
+			looptime = .8
+		},
 		movement = {
 			dx = 0,
 			dy = 0,
