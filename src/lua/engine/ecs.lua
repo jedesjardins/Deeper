@@ -36,6 +36,7 @@ function ECS.new()
 
 	self.currUid = 1
 	self.openUids = {}
+	self.deleteUids = {}
 	self.components = {}
 	self.beginsystems = {}
 	self.systems = {}
@@ -140,11 +141,8 @@ function ECS:addComponent(id, name, comp, scratch)
 end
 
 function ECS:removeEntity(uid)
-	self.openUids[#self.openUids+1] = uid
-
-	for name, components in pairs(self.components) do
-		components[uid] = nil
-	end
+	-- delete is done at the end of update
+	table.insert(self.deleteUids, uid)
 end
 
 function ECS:clearEntities()
@@ -201,6 +199,14 @@ function ECS:update(dt, input)
 
 	for index, func in ipairs(self.endsystems) do
 		func(self, dt, input)
+	end
+
+	for _, uid in ipairs(self.deleteUids) do
+		self.openUids[#self.openUids+1] = uid
+
+		for name, components in pairs(self.components) do
+			components[uid] = nil
+		end
 	end
 end
 

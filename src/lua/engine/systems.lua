@@ -609,7 +609,6 @@ local systems = {
 							pos_id2.x, pos_id2.y = p2.x - col_id2.offx/2, p2.y - col_id2.offy/2
 							
 						end end end
-						
 					end
 				end
 			end
