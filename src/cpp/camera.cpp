@@ -322,7 +322,7 @@ void Camera::draw(DrawContainer &dc)
 			SDL_Rect col{(int)renderCol.x, (int)renderCol.y, (int)renderCol.w, (int)renderCol.h};
 
 			SDL_SetRenderDrawColor(this->render, 0x00, 0xFF, 0x00, 0x44);
-
+			SDL_RenderDrawRect(this->render, &col);
 			SDL_RenderFillRect(this->render, &col);
 		}
 

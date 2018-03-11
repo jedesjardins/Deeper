@@ -127,7 +127,7 @@ end
 function ECS:addEntity(name, scratch)
 	local entity = self.presets[name]
 	if not entity then
-		print("No entity:", name)
+		Debug:writeln("ECS","No entity", name)
 	end
 
 	return self:addEntityFromTable(entity, scratch)

@@ -78,6 +78,10 @@ local oldentities = {
 				{-2.5/16, -7/16},
 				{-2.5/16, -7/16}
 			}
+		},
+		health = {
+			max = 100,
+			amount = 100
 		}
 	},
 	sword = {
@@ -132,6 +136,7 @@ local entities = {
 			down = "S",
 			left = "A",
 			right = "D",
+			drop = "Q",
 			attack = "Space",
 			lockdirection = "Left Shift",
 			interact = "Return",
@@ -181,7 +186,7 @@ local entities = {
 					end_transition = "walk"
 				},
 				attack = {
-					length = .4,
+					length = .3,
 					end_transition = "walk"
 				}
 			}
@@ -239,6 +244,10 @@ local entities = {
 		},
 		effects = {
 			-- ex: burn = {duration = 1.1 (seconds), strength = ?} 
+		},
+		health = {
+			max = 100,
+			amount = 100
 		}
 	},
 	sword = {
@@ -264,7 +273,8 @@ local entities = {
 		},
 		holdable = {
 			offx = -7/16,
-			offy = 0
+			offy = 0,
+			hitbox_name = "sword_hitbox"
 		}
 	},
 	wand = {
@@ -288,16 +298,37 @@ local entities = {
 			animate = false,
 			looptime = .8
 		},
-		movement = {
-			dx = 0,
-			dy = 0,
-			direction = "down",
-			is_moving = false,
-			changed = false
+		holdable = {
+			offx = -2/16,
+			offy = 0,
+			hitbox_name = "magic_bolt_hitbox"
+		}
+	},
+	bow = {
+		position = {
+			x = "$1", y = "$2", z = 0,
+			w = 5/16, h = 1/16
+		},
+		collision = {
+			offx = 0,
+			offy = 0,
+			w = 5/16,
+			h = 1/16
+		},
+		sprite = {
+			img = "wand.png",
+			scale = 1,
+			framex = 1,
+			framey = 1,
+			framesx = 1,
+			framesy = 1,
+			animate = false,
+			looptime = .8
 		},
 		holdable = {
-			offx = -7/16,
-			offy = 0
+			offx = -2/16,
+			offy = 0,
+			hitbox_name = "arrow_hitbox"
 		}
 	},
 	block = {

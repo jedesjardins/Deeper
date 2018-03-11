@@ -11,6 +11,7 @@ state.ecs:addBeginSystem(systems.controlEntity)
 
 state.ecs:addSystem(systems.updatePosition)
 state.ecs:addSystem(systems.updateLockPosition)
+state.ecs:addSystem(systems.updateDriftPosition)
 --state.ecs:addSystem(systems.createHitbox)
 state.ecs:addSystem(systems.updateAttack)
 state.ecs:addSystem(systems.updateMovementCollisions)
@@ -27,9 +28,11 @@ state.ecs:addPresets(entities)
 state.ecs:addPresets(hitboxes)
 
 state.ecs:addEntity("man", {0, 0})
-state.ecs:addEntity("sword", {-2, 2})
-state.ecs:addEntity("block", {-2, -2})
-state.ecs:addEntity("testhitbox", {-2, 0, 1, 1})
+state.ecs:addEntity("sword", {-2, -1})
+state.ecs:addEntity("bow", {-2, -2})
+state.ecs:addEntity("wand", {-2, -3})
+--state.ecs:addEntity("block", {-2, -2})
+--state.ecs:addEntity("testhitbox", {-2, 0, 1, 1})
 
 
 local id2 = state.ecs:addEntity("man", {2, 2})
