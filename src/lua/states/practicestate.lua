@@ -17,6 +17,9 @@ state.ecs:addSystem(systems.updateAttack)
 state.ecs:addSystem(systems.updateMovementCollisions)
 state.ecs:addSystem(systems.updateItemCollisions)
 state.ecs:addSystem(systems.updateHitboxCollisions)
+
+state.ecs:addSystem(systems.updateHealth)
+
 state.ecs:addSystem(systems.updateLifetime)
 
 state.ecs:addEndSystem(systems.updateSprite)

@@ -33,6 +33,7 @@ struct DRAWITEMTYPE {
 	int NONE = 0;
 	int RECT = 1;
 	int SPRITE = 2;
+	int TEXTBOX = 3;
 };
 
 struct DrawItemSprite
@@ -46,16 +47,27 @@ struct DrawItemSprite
 	Rect dest;
 };
 
+struct DrawItemUIBox
+{
+
+};
+
 struct DrawUnion
 {
 	Rect rect;
 	DrawItemSprite sprite;
+	DrawItemUIBox box;
+
+	DrawUnion();
+	~DrawUnion();
 };
 
 struct DrawItem
 {
 	int type;
 	DrawUnion data;
+
+	DrawItem(int type);
 };
 
 class DrawContainer
@@ -90,7 +102,5 @@ public:
 
 
 };
-
-void calculateCollisionOut(const Rect &);
 
 #endif

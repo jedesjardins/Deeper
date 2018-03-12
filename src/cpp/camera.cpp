@@ -196,6 +196,26 @@ void Rect::resolve(const Rect &r2, Point &p)
 	}
 }
 
+DrawUnion::DrawUnion(){};
+DrawUnion::~DrawUnion(){};
+
+DrawItem::DrawItem(int type)
+:type(type)
+{
+	if(type == 1) //Rect
+	{
+		this->data.rect = Rect();
+	}
+	else if(type == 2) //Sprite
+	{
+		this->data.sprite = DrawItemSprite();
+	}
+	else if(type == 3)
+	{
+		this->data.box = DrawItemUIBox();
+	}
+}
+
 void DrawContainer::add(DrawItem d)
 {
 	this->objs.push_back(d);
@@ -390,24 +410,4 @@ void Camera::draw(DrawContainer &dc)
 		*/
 		
 	}
-}
-
-void calculateCollisionOut(const Rect &collision)
-{
-	SDL_Rect renderRect;
-
-	int w, h;
-
-	w = ((double)collision.w)*16;
-	h = ((double)collision.h)*16;
-
-	double scalex = (((double)640)/(20*16));
-	double scaley = (((double)480)/(15*16));
-
-	renderRect.w = w * scalex;
-	renderRect.h = h * scaley;
-
-	renderRect.x = 320 + collision.x*16*scalex  - (.5 * renderRect.w);
-
-	renderRect.y = 240 - collision.y*16*scaley - (.5 * renderRect.h);
 }

@@ -419,12 +419,16 @@ local systems = {
 						-- apply damage
 						for damagetype, amount in pairs(hit_id.damage) do 
 							local comp = ecs.components[damagetype][id2]
+							local class_modifier = ecs.components.modifier[id2].class[hit_id.class]
+							local damage_modifier = ecs.components.modifier[id2].damage[damagetype]
+
+							local modified_amount = amount + -1 * amount * ((class_modifier or 0) + (damage_modifier or 0))
+
 							if comp then
 								-- amounts are expressed in negatives for damage
-								comp.amount = ((comp.amount + amount) < 0 and 0) or 
-											  ((comp.amount + amount) > comp.max and comp.max) or 
-											  (comp.amount + amount)
-								print(id2, damagetype, comp.amount)
+								comp.amount = ((comp.amount + modified_amount) < 0 and 0) or 
+											  ((comp.amount + modified_amount) > comp.max and comp.max) or 
+											  (comp.amount + modified_amount)
 							end
 						end
 
@@ -449,8 +453,15 @@ local systems = {
 	end,
 
 	updateHealth = function(ecs, dt, input)
-		local entities = ecs.components:requireAll("health")
+		local entities = ecs:requireAll("health")
 
+		for _, id in ipairs(entities) do
+			local health = ecs.components.health[id]
+
+			if health.amount <= 0 and health.amount ~= -1*inf then
+				ecs.components.lifetime[id] = {time = -1*inf}
+			end
+		end
 	end,
 
 	updateLifetime = function(ecs, dt, input)
@@ -516,7 +527,7 @@ local systems = {
 			local position = ecs.components.position[id]
 			local sprite = ecs.components.sprite[id]
 
-			local di = DrawItem.new()
+			local di = DrawItem.new(2)
 			di.type = 2
 			local dis = di.data.sprite
 
@@ -547,7 +558,7 @@ local systems = {
 				local p_pos = ecs.components.p_position[hand.held_id]
 				local holdable = ecs.components.holdable[hand.held_id]
 
-				local di = DrawItem.new()
+				local di = DrawItem.new(2)
 				di.type = 2
 				local dis = di.data.sprite
 		
@@ -612,7 +623,7 @@ local systems = {
 			local position = ecs.components.position[id]
 			local collision = ecs.components.collision[id]
 
-			local di = DrawItem.new()
+			local di = DrawItem.new(1)
 			di.type = 1
 			local dest = di.data.rect
 
