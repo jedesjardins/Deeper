@@ -3,6 +3,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2_image/SDL_image.h>
+#include <SDL_ttf.h>
 #include <iostream>
 #include <vector>
 #include <utility>
@@ -34,6 +35,7 @@ struct DRAWITEMTYPE {
 	int RECT = 1;
 	int SPRITE = 2;
 	int TEXTBOX = 3;
+	int OPTIONBOX = 4;
 };
 
 struct DrawItemSprite
@@ -47,16 +49,30 @@ struct DrawItemSprite
 	Rect dest;
 };
 
-struct DrawItemUIBox
+struct DrawItemTextBox
 {
+	std::string firstline;
+	std::string secondline;
+	double x;
+	double y;
+	double w;
+	double h;
+};
 
+struct DrawItemOptionBox
+{
+	double x;
+	double y;
+	double w;
+	double h;
 };
 
 struct DrawUnion
 {
 	Rect rect;
 	DrawItemSprite sprite;
-	DrawItemUIBox box;
+	DrawItemTextBox textbox;
+	DrawItemOptionBox optionbox;
 
 	DrawUnion();
 	~DrawUnion();
@@ -84,6 +100,8 @@ class Camera
 private:
 	SDL_Window *window;
 	SDL_Renderer *render;
+
+	std::vector<SDL_Texture *> layers = {nullptr, nullptr, nullptr};
 	std::unordered_map<std::string, SDL_Texture *> textures;
 
 	Rect screenrect;

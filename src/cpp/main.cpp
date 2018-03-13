@@ -42,9 +42,27 @@ void registerUsertypes(sol::state &lua)
 		"rotation", &DrawItemSprite::rotation
 		);
 
+	lua.new_usertype<DrawItemTextBox>("DrawItemTextBox",
+		"firstline", &DrawItemTextBox::firstline,
+		"secondline", &DrawItemTextBox::secondline,
+		"x", &DrawItemTextBox::x,
+		"y", &DrawItemTextBox::y,
+		"w", &DrawItemTextBox::w,
+		"h", &DrawItemTextBox::h
+		);
+
+	lua.new_usertype<DrawItemOptionBox>("DrawItemOptionBox",
+		"x", &DrawItemOptionBox::x,
+		"y", &DrawItemOptionBox::y,
+		"w", &DrawItemOptionBox::w,
+		"h", &DrawItemOptionBox::h
+		);
+
 	lua.new_usertype<DrawUnion>("DrawUnion",
 		"rect", &DrawUnion::rect,
-		"sprite", &DrawUnion::sprite
+		"sprite", &DrawUnion::sprite,
+		"textbox", &DrawUnion::textbox,
+		"optionbox", &DrawUnion::optionbox
 		);
 
 	lua.new_usertype<DrawItem>("DrawItem",
@@ -64,6 +82,14 @@ void registerUsertypes(sol::state &lua)
 		"PRESSED", sol::readonly(&KEYSTATE::PRESSED),
 		"HELD", sol::readonly(&KEYSTATE::HELD),
 		"RELEASED", sol::readonly(&KEYSTATE::RELEASED)
+		);
+
+	lua.new_usertype<DRAWITEMTYPE>("DRAWITEMTYPE",
+		"NONE", sol::readonly(&DRAWITEMTYPE::NONE),
+		"RECT", sol::readonly(&DRAWITEMTYPE::RECT),
+		"SPRITE", sol::readonly(&DRAWITEMTYPE::SPRITE),
+		"TEXTBOX", sol::readonly(&DRAWITEMTYPE::TEXTBOX),
+		"OPTIONBOX", sol::readonly(&DRAWITEMTYPE::OPTIONBOX)
 		);
 
 	lua.new_usertype<Input>("Input",

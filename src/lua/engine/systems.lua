@@ -528,7 +528,6 @@ local systems = {
 			local sprite = ecs.components.sprite[id]
 
 			local di = DrawItem.new(2)
-			di.type = 2
 			local dis = di.data.sprite
 
 			dis.dest.x, dis.dest.y = position.x, position.y
@@ -559,7 +558,6 @@ local systems = {
 				local holdable = ecs.components.holdable[hand.held_id]
 
 				local di = DrawItem.new(2)
-				di.type = 2
 				local dis = di.data.sprite
 		
 				local z = 0

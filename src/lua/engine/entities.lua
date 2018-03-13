@@ -12,7 +12,7 @@ local entities = {
 			attack = "Space",
 			lockdirection = "Left Shift",
 			interact = "Return",
-			freeze_controls = "P",
+			freeze_controls = "R",
 			can_control = true
 		},
 		sprite = {

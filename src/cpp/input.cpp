@@ -34,9 +34,6 @@ bool Input::update()
 			{
 				this->keystates[SDL_GetKeyName(event.key.keysym.sym)] = KS.RELEASED;
 			}
-			
-			if(event.key.keysym.sym == SDLK_ESCAPE)
-				running &= false;
 		}
 		else if(event.type == SDL_MOUSEMOTION)
 		{

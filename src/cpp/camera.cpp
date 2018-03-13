@@ -24,31 +24,8 @@ SDL_Rect Rect::convert()
 		};
 }
 
-std::vector<Point> getPoints(const Rect &r)
-{
-	std::vector<Point> points;
-
-	points.push_back({r.x, r.y});
-	points.push_back({r.x - r.w/2, r.y - r.h/2});
-	points.push_back({r.x + r.w/2, r.y - r.h/2});
-	points.push_back({r.x - r.w/2, r.y + r.h/2});
-	points.push_back({r.x + r.w/2, r.y + r.h/2});
-	points.push_back({r.x, r.y - r.h/2});
-	points.push_back({r.x, r.y + r.h/2});
-	points.push_back({r.x - r.w/2, r.y});
-	points.push_back({r.x + r.w/2, r.y});
-
-	return points;
-}
-
 bool Rect::collide(const Rect &r2)
 {
-
-	//if (RectA.X1 < RectB.X2 
-	//&& RectA.X2 > RectB.X1 &&
-    //RectA.Y1 > RectB.Y2 
-    //&& RectA.Y2 < RectB.Y1) 
-
 	Rect &r1 = *this;
 
 	return 
@@ -56,38 +33,6 @@ bool Rect::collide(const Rect &r2)
 		&& r1.x + r1.w/2 > r2.x - r2.w/2
 		&& r1.y + r1.h/2 > r2.y - r2.h/2
 		&& r1.y - r1.h/2 < r2.y + r2.h/2;
-
-
-	/*
-	std::vector<Point> points = getPoints(r2);
-
-	for(auto it = points.begin(); it != points.end(); ++it)
-	{
-		if(it->x > r1.x - r1.w/2
-			&& it->x < r1.x + r1.w/2
-			&& it->y > r1.y - r1.h/2
-			&& it->y < r1.y + r1.h/2)
-		{
-			return true;
-		}
-	}
-
-	//TODO(James): Is this necessary?
-	points = getPoints(r1);
-
-	for(auto it = points.begin(); it != points.end(); ++it)
-	{
-		if(it->x > r2.x - r2.w/2
-			&& it->x < r2.x + r2.w/2
-			&& it->y > r2.y - r2.h/2
-			&& it->y < r2.y + r2.h/2)
-		{
-			return true;
-		}
-	}
-
-	return false;
-	*/
 }
 
 void calculateOverlap(const Rect &r1, const Rect &r2, double &overlap_x, double &overlap_y)
@@ -212,7 +157,11 @@ DrawItem::DrawItem(int type)
 	}
 	else if(type == 3)
 	{
-		this->data.box = DrawItemUIBox();
+		this->data.textbox = DrawItemTextBox();
+	}
+	else if(type == 4)
+	{
+		this->data.optionbox = DrawItemOptionBox();
 	}
 }
 
@@ -224,6 +173,8 @@ void DrawContainer::add(DrawItem d)
 Camera::Camera(SDL_Window *window, SDL_Renderer *render)
 :window(window), screenrect{0, 0, 800, 600}, render(render)
 {
+	IMG_Init(IMG_INIT_PNG);
+	TTF_Init();
 	SDL_SetRenderDrawBlendMode(this->render, SDL_BLENDMODE_BLEND);
 
 	int32_t w, h;
@@ -261,9 +212,33 @@ void Camera::draw(DrawContainer &dc)
 
 	for(auto it: dc.objs)
 	{	
-		// get texture
+		if(it.type == 1)
+		{
+			Rect dest = it.data.rect;
 
-		if(it.type == 2)
+			Rect renderCol;
+
+			double scalex = (((double)this->screenrect.w)/(viewport.w*TILE_SIZE));
+			double scaley = (((double)this->screenrect.h)/(viewport.h*TILE_SIZE));
+
+			renderCol.w = dest.w * scalex * TILE_SIZE;
+			renderCol.h = dest.h * scaley * TILE_SIZE;
+
+			renderCol.x = -1*viewport.x*TILE_SIZE*scalex + (.5 * this->screenrect.w)
+						+ dest.x*TILE_SIZE*scalex
+						- (.5 * renderCol.w);
+
+			renderCol.y = viewport.y*TILE_SIZE*scaley + (.5 * this->screenrect.h) 
+						- dest.y*TILE_SIZE*scaley 
+						- (.5 * renderCol.h);
+
+			SDL_Rect col{(int)renderCol.x, (int)renderCol.y, (int)renderCol.w, (int)renderCol.h};
+
+			SDL_SetRenderDrawColor(this->render, 0x00, 0xFF, 0x00, 0x44);
+			SDL_RenderDrawRect(this->render, &col);
+			SDL_RenderFillRect(this->render, &col);
+		}
+		else if(it.type == 2)
 		{
 			DrawItemSprite spr = it.data.sprite;
 
@@ -318,32 +293,175 @@ void Camera::draw(DrawContainer &dc)
 			//std::cout << renderRect.x << " " << renderRect.y << std::endl;
 
 			SDL_RenderCopyEx(this->render, texture, &frame, &out, -1*spr.rotation, nullptr, SDL_FLIP_NONE);
-		} 
-		else if(it.type == 1)
+		}
+		else if (it.type == 3)
 		{
-			Rect dest = it.data.rect;
+			std::string texturename = "border.png";
 
-			Rect renderCol;
+			if(!this->textures[texturename])
+			{
+				//std::cout << "loading texture: " << it.texturename << std::endl;
+				surface = IMG_Load(("resources/sprites/"+texturename).c_str());
 
-			double scalex = (((double)this->screenrect.w)/(viewport.w*TILE_SIZE));
-			double scaley = (((double)this->screenrect.h)/(viewport.h*TILE_SIZE));
+				texture = SDL_CreateTextureFromSurface(this->render, surface);
+				this->textures[texturename] = texture;
 
-			renderCol.w = dest.w * scalex * TILE_SIZE;
-			renderCol.h = dest.h * scaley * TILE_SIZE;
+				SDL_FreeSurface(surface);
+			}
+			else
+				texture = this->textures[texturename];
 
-			renderCol.x = -1*viewport.x*TILE_SIZE*scalex + (.5 * this->screenrect.w)
-						+ dest.x*TILE_SIZE*scalex
-						- (.5 * renderCol.w);
+			DrawItemTextBox box = it.data.textbox;
 
-			renderCol.y = viewport.y*TILE_SIZE*scaley + (.5 * this->screenrect.h) 
-						- dest.y*TILE_SIZE*scaley 
-						- (.5 * renderCol.h);
+			int sw, sh;
+			SDL_GetWindowSize(this->window, &sw, &sh);
 
-			SDL_Rect col{(int)renderCol.x, (int)renderCol.y, (int)renderCol.w, (int)renderCol.h};
 
-			SDL_SetRenderDrawColor(this->render, 0x00, 0xFF, 0x00, 0x44);
-			SDL_RenderDrawRect(this->render, &col);
-			SDL_RenderFillRect(this->render, &col);
+			SDL_Rect frame{0, 0, 10, 10};
+			SDL_Rect out;
+
+			int startx = box.x * sw;
+			int starty = box.y * sh;
+			int width = box.w * sw;
+			int height = box.h * sh;
+
+			std::vector<int> xs = {startx, startx+10, startx+width-10};
+			std::vector<int> ys = {starty, starty+10, starty+height-10};
+			std::vector<int> ws = {10, width-20, 10};
+			std::vector<int> hs = {10, height-20, 10};
+
+
+			for(int i = 0; i < 3; ++i)
+			{
+				for(int j = 0; j < 3; ++j)
+				{
+					frame.x = i * 10;
+					frame.y = j * 10;
+
+					out.x = xs[i];
+					out.y = ys[j];
+					out.w = ws[i];
+					out.h = hs[j];
+
+					SDL_RenderCopy(this->render, texture, &frame, &out);
+				}
+			}
+
+			int linespace = 10;
+			int textmaxwidth = width-20-linespace*2;
+			int textmaxheight = (height-20-linespace*3)/2;
+			int letterheight = textmaxheight;
+
+			/*
+			SDL_Rect r;
+			r.x = startx + 10 + linespace;
+			r.y = starty + 10 + linespace;
+			r.w = letterheight;
+			r.h = letterheight;
+			SDL_SetRenderDrawColor(this->render, 0x00, 0x00, 0x00, 0xFF);
+			SDL_RenderFillRect(this->render, &r);
+
+
+			r.y += linespace + letterheight;
+			SDL_SetRenderDrawColor(this->render, 0x00, 0x00, 0x00, 0xFF);
+			SDL_RenderFillRect(this->render, &r);
+			*/
+
+
+			TTF_Font *font = TTF_OpenFont("resources/basis33.ttf", letterheight);
+			if(font == nullptr)
+			{
+				std::cout << "Error font " << TTF_GetError() << std::endl;
+				return;
+			}
+
+			SDL_Color color={0,0,0};
+
+			SDL_Surface *textSurface = TTF_RenderText_Solid(font, "Hello", color);
+			if(textSurface == nullptr)
+			{
+				std::cout << "Error surface" << std::endl;
+				TTF_CloseFont(font);
+				return;
+			}
+
+			SDL_Texture *textTexture = SDL_CreateTextureFromSurface(this->render, textSurface);
+			if(textTexture == nullptr)
+			{
+				std::cout << "Error texture" << std::endl;
+				SDL_FreeSurface(textSurface);
+				TTF_CloseFont(font);
+				return;
+			}
+
+			uint32_t format;
+			int access;
+
+			SDL_Rect r;
+			r.x = startx + 10 + linespace;
+			r.y = r.y = starty + 10 + linespace;
+			SDL_QueryTexture(textTexture, &format, &access, &r.w, &r.h);
+			r.w += 5;
+			//r.h = letterheight;
+
+			SDL_RenderCopy(this->render, textTexture, nullptr, &r);
+
+			SDL_FreeSurface(textSurface);
+			SDL_DestroyTexture(textTexture);
+
+    		TTF_CloseFont(font);
+		}
+		else if (it.type == 4)
+		{
+			std::string texturename = "border.png";
+
+			if(!this->textures[texturename])
+			{
+				//std::cout << "loading texture: " << it.texturename << std::endl;
+				surface = IMG_Load(("resources/sprites/"+texturename).c_str());
+
+				texture = SDL_CreateTextureFromSurface(this->render, surface);
+				this->textures[texturename] = texture;
+
+				SDL_FreeSurface(surface);
+			}
+			else
+				texture = this->textures[texturename];
+
+			DrawItemOptionBox box = it.data.optionbox;
+
+			int sw, sh;
+			SDL_GetWindowSize(this->window, &sw, &sh);
+
+			SDL_Rect frame{0, 0, 10, 10};
+			SDL_Rect out;
+
+			int startx = box.x * sw;
+			int starty = box.y * sh;
+			int width = box.w * sw;
+			int height = box.h * sh;
+
+			std::vector<int> xs = {startx, startx+10, startx+width-10};
+			std::vector<int> ys = {starty, starty+10, starty+height-10};
+			std::vector<int> ws = {10, width-20, 10};
+			std::vector<int> hs = {10, height-20, 10};
+
+
+			for(int i = 0; i < 3; ++i)
+			{
+				for(int j = 0; j < 3; ++j)
+				{
+					frame.x = i * 10;
+					frame.y = j * 10;
+
+					out.x = xs[i];
+					out.y = ys[j];
+					out.w = ws[i];
+					out.h = hs[j];
+
+					SDL_RenderCopy(this->render, texture, &frame, &out);
+				}
+			}
 		}
 
 		/*

@@ -51,10 +51,20 @@ viewport.dim.w = 10
 viewport.dim.h = 7.5
 
 function state:update(dt, input)
+	-- exit game
+	if input:getKeyState("Escape") == KS.PRESSED then
+		return {{"pop", 1}}
+	end
+
+	-- pause
+	if input:getKeyState("P") == KS.PRESSED then
+		return {{"push", "pausestate"}}
+	end
+
 	--TODO: ecs.update() should also return bool
 	self.ecs:update(dt, input)
 
-	return true
+	return {}
 end
 
 function state:draw(drawcontainer)
