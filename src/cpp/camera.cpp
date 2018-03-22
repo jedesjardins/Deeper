@@ -107,10 +107,6 @@ void Rect::resolve(const Rect &r2, Point &p)
 
 	calculateOverlap(r1, r2, overlap_x, overlap_y);
 
-	//std::cout << r1.x << " " << r1.w << " " << r2.x << " " << r2.w << "\n";
-
-	//std::cout << overlap_x << " " << overlap_y << std::endl;
-
 	//TODO(James): THIS IS A SLOPPY FIX FOR INTERNAL EDGES
 	if(overlap_x == overlap_y)
 		overlap_x -= 0.0001;
@@ -170,11 +166,50 @@ void DrawContainer::add(DrawItem d)
 	this->objs.push_back(d);
 }
 
+GlyphAtlas::GlyphAtlas()
+:font(nullptr)
+{
+	TTF_Init();
+
+	this->font = TTF_OpenFont("resources/basis33.ttf", 35);
+}
+
+GlyphAtlas::~GlyphAtlas()
+{
+	for(auto it: this->glyphs)
+	{
+		SDL_DestroyTexture(it.second);
+	}
+
+	TTF_CloseFont(this->font);
+}
+
+SDL_Texture* GlyphAtlas::getGlyph(SDL_Renderer *render, char c)
+{
+	if(!this->glyphs[c])
+	{
+		char str[2];
+		str[0] = c;
+		str[1] = '\0';
+
+		SDL_Color color = {0,0,0};
+		SDL_Surface *textSurface = TTF_RenderText_Solid(this->font, str, color);
+		this->glyphs[c] = SDL_CreateTextureFromSurface(render, textSurface);
+
+		SDL_FreeSurface(textSurface);
+
+		return this->glyphs[c];
+	}
+	else
+		return this->glyphs[c];
+}
+
+
 Camera::Camera(SDL_Window *window, SDL_Renderer *render)
-:window(window), screenrect{0, 0, 800, 600}, render(render)
+:window(window), screenrect{0, 0, 800, 600}, render(render), glyphatlas()
 {
 	IMG_Init(IMG_INIT_PNG);
-	TTF_Init();
+	
 	SDL_SetRenderDrawBlendMode(this->render, SDL_BLENDMODE_BLEND);
 
 	int32_t w, h;
@@ -347,69 +382,91 @@ void Camera::draw(DrawContainer &dc)
 				}
 			}
 
+			uint32_t format;
+			int access;
+			int tw, th;
+
+			SDL_Texture *textTexture;
+
 			int linespace = 10;
 			int textmaxwidth = width-20-linespace*2;
 			int textmaxheight = (height-20-linespace*3)/2;
 			int letterheight = textmaxheight;
 
-			/*
 			SDL_Rect r;
 			r.x = startx + 10 + linespace;
 			r.y = starty + 10 + linespace;
-			r.w = letterheight;
-			r.h = letterheight;
-			SDL_SetRenderDrawColor(this->render, 0x00, 0x00, 0x00, 0xFF);
-			SDL_RenderFillRect(this->render, &r);
 
 
-			r.y += linespace + letterheight;
-			SDL_SetRenderDrawColor(this->render, 0x00, 0x00, 0x00, 0xFF);
-			SDL_RenderFillRect(this->render, &r);
-			*/
-
-
-			TTF_Font *font = TTF_OpenFont("resources/basis33.ttf", letterheight);
-			if(font == nullptr)
+			for (int i = 0; i < box.firstline.length(); ++i)
 			{
-				std::cout << "Error font " << TTF_GetError() << std::endl;
-				return;
+				textTexture = this->glyphatlas.getGlyph(this->render, box.firstline[i]);
+
+
+				SDL_QueryTexture(textTexture, &format, &access, &tw, &th);
+
+				r.w = tw;
+				r.h = th;
+
+				if(r.x + r.w > startx + width-10)
+					break;
+
+				SDL_RenderCopy(this->render, textTexture, nullptr, &r);
+
+				SDL_SetRenderDrawColor(this->render, 0x00, 0x00, 0x00, 0x22);
+				SDL_RenderDrawRect(this->render, &r);
+
+				r.x += r.w;
 			}
 
-			SDL_Color color={0,0,0};
-
-			SDL_Surface *textSurface = TTF_RenderText_Solid(font, "Hello", color);
-			if(textSurface == nullptr)
-			{
-				std::cout << "Error surface" << std::endl;
-				TTF_CloseFont(font);
-				return;
-			}
-
-			SDL_Texture *textTexture = SDL_CreateTextureFromSurface(this->render, textSurface);
-			if(textTexture == nullptr)
-			{
-				std::cout << "Error texture" << std::endl;
-				SDL_FreeSurface(textSurface);
-				TTF_CloseFont(font);
-				return;
-			}
-
-			uint32_t format;
-			int access;
-
-			SDL_Rect r;
+			//move to start of next line
 			r.x = startx + 10 + linespace;
-			r.y = r.y = starty + 10 + linespace;
-			SDL_QueryTexture(textTexture, &format, &access, &r.w, &r.h);
-			r.w += 5;
-			//r.h = letterheight;
+			r.y += r.h + linespace;
 
-			SDL_RenderCopy(this->render, textTexture, nullptr, &r);
+			for (int i = 0; i < box.secondline.length(); ++i)
+			{
+				textTexture = this->glyphatlas.getGlyph(this->render, box.secondline[i]);
 
-			SDL_FreeSurface(textSurface);
-			SDL_DestroyTexture(textTexture);
 
-    		TTF_CloseFont(font);
+				SDL_QueryTexture(textTexture, &format, &access, &tw, &th);
+
+				r.w = tw;
+				r.h = th;
+				SDL_RenderCopy(this->render, textTexture, nullptr, &r);
+
+				SDL_SetRenderDrawColor(this->render, 0x00, 0x00, 0x00, 0x22);
+				SDL_RenderDrawRect(this->render, &r);
+
+				r.x += r.w;
+			}
+
+			if(box.showcontinuecursor)
+			{
+				SDL_Surface *cursorSurface;
+				SDL_Texture *cursorTexture;
+
+				if(!this->textures["cursordown.png"])
+				{
+					//std::cout << "loading texture: " << it.texturename << std::endl;
+					cursorSurface = IMG_Load("resources/sprites/cursordown.png");
+
+					cursorTexture = SDL_CreateTextureFromSurface(this->render, cursorSurface);
+					this->textures["cursordown.png"] = cursorTexture;
+
+					SDL_FreeSurface(cursorSurface);
+				}
+				else
+					cursorTexture = this->textures["cursordown.png"];
+
+				//draw the cursor
+
+				r.x = 600;
+				r.y += r.h - 2;
+				r.w = 20;
+				r.h = 10;
+
+				SDL_RenderCopy(this->render, cursorTexture, nullptr, &r);
+			}
 		}
 		else if (it.type == 4)
 		{
@@ -463,69 +520,5 @@ void Camera::draw(DrawContainer &dc)
 				}
 			}
 		}
-
-		/*
-		//
-		// DRAW IMAGE
-		//
-
-		//get size of image
-		uint32_t format;
-		int access;
-		int w, h;
-		SDL_QueryTexture(texture, &format, &access, &w, &h);
-
-		w /= it.totalframes;
-		int framex = (it.frame -1) * w;
-		
-		SDL_Rect frame{framex, 0, w, h};
-
-		//scale output
-		it.destrect.w *= w;
-		it.destrect.h *= h;
-
-		// translate dest rect to 
-		Rect renderRect;
-		double scalex = (((double)this->screenrect.w)/(viewport.w*TILE_SIZE));
-		double scaley = (((double)this->screenrect.h)/(viewport.h*TILE_SIZE));
-
-		renderRect.w = it.destrect.w * scalex;
-		renderRect.h = it.destrect.h * scaley;
-
-		renderRect.x = -1*viewport.x*TILE_SIZE*scalex  + (.5 * this->screenrect.w) //get viewport translation to screen
-						+ it.destrect.x*TILE_SIZE*scalex 						//add position
-						- (.5 * renderRect.w);								//subtract half the width
-
-		renderRect.y = viewport.y*TILE_SIZE*scaley + (.5 * this->screenrect.h) 
-						- it.destrect.y*TILE_SIZE*scaley 
-						- (.5 * renderRect.h);
-
-		SDL_Rect out{(int)renderRect.x, (int)renderRect.y, (int)renderRect.w, (int)renderRect.h};
-
-		SDL_RenderCopyEx(this->render, texture, &frame, &out, -1*it.rotation, nullptr, SDL_FLIP_NONE);
-
-		//
-		// DRAW COLLISION BOX
-		//
-		Rect renderCol;
-
-		renderCol.w = it.colrect.w * scalex * TILE_SIZE;
-		renderCol.h = it.colrect.h * scaley * TILE_SIZE;
-
-		renderCol.x = -1*viewport.x*TILE_SIZE*scalex + (.5 * this->screenrect.w)
-					+ it.colrect.x*TILE_SIZE*scalex
-					- (.5 * renderCol.w);
-
-		renderCol.y = viewport.y*TILE_SIZE*scaley + (.5 * this->screenrect.h) 
-					- it.colrect.y*TILE_SIZE*scaley 
-					- (.5 * renderCol.h);
-
-		SDL_Rect col{(int)renderCol.x, (int)renderCol.y, (int)renderCol.w, (int)renderCol.h};
-
-		SDL_SetRenderDrawColor(this->render, 0x00, 0xFF, 0x00, 0x44);
-
-		SDL_RenderFillRect(this->render, &col);
-		*/
-		
 	}
 }

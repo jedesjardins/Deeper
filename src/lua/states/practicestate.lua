@@ -1,54 +1,62 @@
 local state = STATE.new()
 
 
-state.ecs = ECS:new()
+
 local systems = require(LUA_FOLDER .. 'engine.systems')
 local entities = require(LUA_FOLDER .. 'engine.entities')
 local hitboxes = require(LUA_FOLDER .. 'engine.hitboxes')
 
+function state:enter()
 
-state.ecs:addBeginSystem(systems.controlEntity)
+	state.ecs = ECS:new()
 
-state.ecs:addSystem(systems.updatePosition)
-state.ecs:addSystem(systems.updateLockPosition)
-state.ecs:addSystem(systems.updateDriftPosition)
---state.ecs:addSystem(systems.createHitbox)
-state.ecs:addSystem(systems.updateAttack)
-state.ecs:addSystem(systems.updateMovementCollisions)
-state.ecs:addSystem(systems.updateItemCollisions)
-state.ecs:addSystem(systems.updateHitboxCollisions)
+	state.ecs:addBeginSystem(systems.controlEntity)
 
-state.ecs:addSystem(systems.updateHealth)
+	state.ecs:addSystem(systems.updatePosition)
+	state.ecs:addSystem(systems.updateLockPosition)
+	--state.ecs:addSystem(systems.updateDriftPosition)
+	--state.ecs:addSystem(systems.createHitbox)
+	state.ecs:addSystem(systems.updateAttack)
+	state.ecs:addSystem(systems.updateInteractCollisions)
+	state.ecs:addSystem(systems.updateMovementCollisions)
+	state.ecs:addSystem(systems.updateItemCollisions)
+	state.ecs:addSystem(systems.updateHitboxCollisions)
 
-state.ecs:addSystem(systems.updateLifetime)
+	state.ecs:addSystem(systems.updateHealth)
 
-state.ecs:addEndSystem(systems.updateSprite)
+	state.ecs:addSystem(systems.updateLifetime)
 
-state.ecs:addDrawSystem(systems.drawSprite)
-state.ecs:addDrawSystem(systems.drawHitboxes)
+	state.ecs:addEndSystem(systems.updateSprite)
 
-state.ecs:addPresets(entities)
-state.ecs:addPresets(hitboxes)
+	state.ecs:addDrawSystem(systems.drawSprite)
+	state.ecs:addDrawSystem(systems.drawHitboxes)
 
-state.ecs:addEntity("man", {0, 0})
-state.ecs:addEntity("sword", {-2, -1})
-state.ecs:addEntity("bow", {-2, -2})
-state.ecs:addEntity("wand", {-2, -3})
---state.ecs:addEntity("block", {-2, -2})
---state.ecs:addEntity("testhitbox", {-2, 0, 1, 1})
+	state.ecs:addPresets(entities)
+	state.ecs:addPresets(hitboxes)
+
+	state.ecs:addEntity("man", {0, 0})
+	state.ecs:addEntity("sword", {-2, -1})
+	state.ecs:addEntity("bow", {-2, -2})
+	state.ecs:addEntity("wand", {-2, -3})
+
+	local id2 = state.ecs:addEntity("man", {2, 2})
+	state.ecs.components.control[id2] = nil
 
 
-local id2 = state.ecs:addEntity("man", {2, 2})
-state.ecs.components.control[id2] = nil
+	self.viewport = {
+		dim = Rect.new()
+	}
 
-local viewport = {
-	dim = Rect.new()
-}
+	self.viewport.dim.x = 0
+	self.viewport.dim.y = 0
+	self.viewport.dim.w = 10
+	self.viewport.dim.h = 7.5
+end
 
-viewport.dim.x = 0
-viewport.dim.y = 0
-viewport.dim.w = 10
-viewport.dim.h = 7.5
+function state:exit()
+	state.ecs = nil
+	state.viewport = nil
+end
 
 function state:update(dt, input)
 	-- exit game
@@ -56,19 +64,18 @@ function state:update(dt, input)
 		return {{"pop", 1}}
 	end
 
+	--[[
 	-- pause
 	if input:getKeyState("P") == KS.PRESSED then
 		return {{"push", "pausestate"}}
 	end
+	]]
 
-	--TODO: ecs.update() should also return bool
-	self.ecs:update(dt, input)
-
-	return {}
+	return self.ecs:update(dt, input) or {}
 end
 
 function state:draw(drawcontainer)
-	drawcontainer.dim = viewport.dim
+	drawcontainer.dim = self.viewport.dim
 	self.ecs:draw(drawcontainer)
 end
 

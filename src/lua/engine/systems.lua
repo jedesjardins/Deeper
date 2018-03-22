@@ -12,10 +12,21 @@ local systems = {
 				local movement = ecs.components.movement[id]
 				local anim = ecs.components.sprite[id]
 
-
 				if input:getKeyState(control.interact) == KS.PRESSED then
 					print("interact")
-					--Debug:writeln("Input", "Interact")
+					hit_id = ecs:addEntity("punch_hitbox", {id, .02})
+
+					if movement.direction == "up" or movement.direction == "down" then
+							local collision = ecs.components.collision[hit_id]
+
+							local w, h = collision.w, collision.h
+							collision.w, collision.h = h, w
+					end
+					--[[
+					return {{"push", "interactstate", 
+							{script = "Hello, my name is James. I don't know\nwhy it's like this. This is interesting."}
+							}}
+					]]
 				end
 
 				if input:getKeyState(control.attack) == KS.PRESSED then
@@ -243,9 +254,16 @@ local systems = {
 		end
 	end,
 
+	updateInteractCollisions = function(ecs, dt, input)
+		local interact = ecs:requireAllBut({"interact", "position", "collision"})
+		local entities = ecs:requireAll("script", "position", "collision")
+
+		print(#interact, #entities)
+	end,
+
 	updateMovementCollisions = function(ecs, dt, input)
 		-- handle colliding entities that aren't items or hitboxes
-		local entities = ecs:requireAllBut({"position", "collision"}, {"holdable", "hitbox", "projectile"})
+		local entities = ecs:requireAllBut({"position", "collision"}, {"holdable", "hitbox", "projectile", "interact"})
 
 		-- initialize locals only once
 		local r1, r2 = Rect.new(), Rect.new()
@@ -375,7 +393,7 @@ local systems = {
 
 	updateHitboxCollisions = function(ecs, dt, input)
 		-- this includes projectiles as just moving hitboxes
-		local hitboxes = ecs:requireAll("hitbox", "position", "collision")
+		local hitboxes = ecs:requireAllBut({"hitbox", "position", "collision"})
 		-- hitboxes can't hit other hitboxes
 		local entities = ecs:requireAllBut({"position", "collision"}, {"hitbox", "holdable"})
 

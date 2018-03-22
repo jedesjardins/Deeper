@@ -1,6 +1,8 @@
 LUA_FOLDER = (...):match("(.-)[^%.]+$")
 RESOURCE_FOLDER = "resources.data."
 
+require(LUA_FOLDER .. 'engine.collision')
+
 ECS = require(LUA_FOLDER .. 'engine.ecs')			-- ECS class
 LEXICON = require(LUA_FOLDER .. 'engine.lexicon')	-- lexicon class
 STATE = require(LUA_FOLDER .. 'engine.state')		-- state class

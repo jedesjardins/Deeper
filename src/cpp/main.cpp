@@ -45,6 +45,7 @@ void registerUsertypes(sol::state &lua)
 	lua.new_usertype<DrawItemTextBox>("DrawItemTextBox",
 		"firstline", &DrawItemTextBox::firstline,
 		"secondline", &DrawItemTextBox::secondline,
+		"showcontinuecursor", &DrawItemTextBox::showcontinuecursor,
 		"x", &DrawItemTextBox::x,
 		"y", &DrawItemTextBox::y,
 		"w", &DrawItemTextBox::w,
@@ -126,8 +127,8 @@ int main( int argc, char* args[] )
 
 
 	window = SDL_CreateWindow("Echelon", 
-							SDL_WINDOWPOS_UNDEFINED, 
-							SDL_WINDOWPOS_UNDEFINED,
+							0, 
+							0,
 							SCREEN_WIDTH,
 							SCREEN_HEIGHT,
 							SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);

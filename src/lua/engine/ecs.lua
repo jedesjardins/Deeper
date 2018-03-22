@@ -202,7 +202,10 @@ end
 function ECS:update(dt, input)
 
 	for index, func in ipairs(self.beginsystems) do
-		func(self, dt, input)
+		local ret = func(self, dt, input)
+		if ret then
+			return ret
+		end
 	end
 
 	for index, func in ipairs(self.systems) do
@@ -222,6 +225,8 @@ function ECS:update(dt, input)
 	end
 
 	self.deleteUids = {}
+
+	return ret
 end
 
 function ECS:draw(drawcontainer)

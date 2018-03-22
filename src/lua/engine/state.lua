@@ -7,6 +7,10 @@ function State.new()
 	return self
 end
 
+function State.enter(arguments) end
+
+function State.exit() end
+
 function State:update() end
 
 function State:draw() end

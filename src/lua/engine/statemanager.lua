@@ -3,22 +3,30 @@ local StateManager = {}
 
 StateManager.stack = {}
 
-table.insert(StateManager.stack, require(LUA_FOLDER .. 'states.startstate'))
+local state = require(LUA_FOLDER .. 'states.teststate')
+state:enter()
+
+table.insert(StateManager.stack, state)
 
 function StateManager:update(dt, input)
 	local actions = self.stack[#self.stack]:update(dt, input) or {}
 
 	for _, action in ipairs(actions) do 
 		if action[1] == "switch" then
-			table.remove(self.stack)
-			table.insert(self.stack, require(LUA_FOLDER .. 'states.'..action[2]))
+			table.remove(self.stack):exit()
+
+			local state = require(LUA_FOLDER .. 'states.'..action[2])
+			state:enter()
+			table.insert(self.stack, state)
 
 		else if action[1] == "push" then
-			table.insert(StateManager.stack, require(LUA_FOLDER .. 'states.'..action[2]))
+			local state = require(LUA_FOLDER .. 'states.'..action[2])
+			state:enter(action[3])
+			table.insert(StateManager.stack, state)
 
 		else if action[1] == "pop" then
 			for i=1, action[2] do
-				table.remove(self.stack)
+				table.remove(self.stack):exit()
 			end
 
 		else if action[1] == "pop_all" then

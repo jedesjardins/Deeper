@@ -1,5 +1,33 @@
 
 local hitboxes = {
+	interact_hitbox = {
+		lifetime = {
+			time = 0.003
+		},
+		position = {
+			x = 0, y = 0
+		},
+		lockon = {
+			lock_id = "$1",
+			offx = 2/16,
+			offy = -1/16
+		},
+		collision = {
+			offx = 0,
+			offy = 0,
+			w = 3/16,
+			h = 3/16
+		},
+		hitbox = {
+			ignore_id = "$1",
+			ignore_hit_ids = {},
+			class = "physical",
+			effects = {},
+			damage = {
+				health = -5
+			}
+		}
+	},
 	punch_hitbox = {
 		lifetime = {
 			time = "$2"

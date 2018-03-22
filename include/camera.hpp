@@ -53,6 +53,7 @@ struct DrawItemTextBox
 {
 	std::string firstline;
 	std::string secondline;
+	bool showcontinuecursor;
 	double x;
 	double y;
 	double w;
@@ -95,12 +96,26 @@ public:
 	void add(DrawItem);
 };
 
+class GlyphAtlas
+{
+private:
+	TTF_Font *font;
+	std::unordered_map<char, SDL_Texture *> glyphs;
+
+public:
+	GlyphAtlas();
+	~GlyphAtlas();
+
+	SDL_Texture* getGlyph(SDL_Renderer *, char);
+};
+
 class Camera
 {
 private:
 	SDL_Window *window;
 	SDL_Renderer *render;
 
+	GlyphAtlas glyphatlas;
 	std::vector<SDL_Texture *> layers = {nullptr, nullptr, nullptr};
 	std::unordered_map<std::string, SDL_Texture *> textures;
 
