@@ -10,17 +10,18 @@ function state:enter()
 	self.ecs:addBeginSystem(systems.control)
 	self.ecs:addSystem(systems.updatePosition)
 	self.ecs:addSystem(systems.updateCollision)
+	self.ecs:addSystem(systems.updateState)
+	self.ecs:addSystem(systems.updateAnimation)
 	self.ecs:addDrawSystem(systems.draw)
+	self.ecs:addDrawSystem(systems.drawHitbox)
 
 	local id1 = self.ecs:addEntity("man", {0, 0, 0})
-	local id2 = self.ecs:addEntity("man", {2, 1, 0})
-	local id3 = self.ecs:addEntity("man", {2, 2, 0})
-	local id4 = self.ecs:addEntity("man", {3, 1, 0})
+	local id2 = self.ecs:addEntity("sword", {2, 1, 45})
+	local id3 = self.ecs:addEntity("block", {-2, 1, 0})
+	local id4 = self.ecs:addEntity("block", {-2, 1.5, 0})
+	local id5 = self.ecs:addEntity("man", {0, 0, 0})
 	
-	self.ecs.components.collision[id1].offx = 0
-	self.ecs.components.control[id2] = nil
-	self.ecs.components.control[id3] = nil
-	self.ecs.components.control[id4] = nil
+	self.ecs.components.control[id5] = nil
 
 	self.vp = Rect.new()
 	self.vp.x = 0

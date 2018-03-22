@@ -228,7 +228,7 @@ Camera::~Camera()
 
 void Camera::clear()
 {
-	SDL_SetRenderDrawColor(this->render, 0x00, 0x00, 0x00, 0xFF);
+	SDL_SetRenderDrawColor(this->render, 0x22, 0x22, 0x22, 0xFF);
 	SDL_RenderClear(this->render);
 }
 

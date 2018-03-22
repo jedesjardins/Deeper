@@ -1,6 +1,8 @@
 LUA_FOLDER = (...):match("(.-)[^%.]+$")
 RESOURCE_FOLDER = "resources.data."
 
+inf = math.huge
+
 require(LUA_FOLDER .. 'engine.collision')
 
 ECS = require(LUA_FOLDER .. 'engine.ecs')			-- ECS class
@@ -17,7 +19,6 @@ end
 
 KS = KEYSTATE.new()
 DT = DRAWITEMTYPE.new()
-inf = math.huge
 
 local input = Input.new()
 
