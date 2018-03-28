@@ -1,5 +1,50 @@
 local entities = {}
 
+hand_positions = {
+	man = {
+		{--framey=1
+			{-5.5/16, -2.5/16},--framex=1
+			{-4.5/16, -4.5/16},--framex=2 ...
+			{-3.5/16, -5.5/16},
+			{-1.5/16, -5.5/16},
+			{-1.5/16, -5.5/16},
+			{-2.5/16, -6.5/16},
+			{-3.5/16, -5.5/16},
+			{-3.5/16, -5.5/16}
+		},
+		{--y=2
+			{4.5/16, -2.5/16},
+			{4.5/16, -0.5/16},
+			{3.5/16, 2.5/16}, --{4.5/16, 0},
+			{1.5/16, 1/16},
+			{1.5/16, 1/16},
+			{2.5/16, 2/16},
+			{3.5/16, 1/16},
+			{3.5/16, 1/16}
+		},
+		{--y=3
+			{-1/16, -4/16},
+			{1/16, -5/16},
+			{4/16, -3/16},
+			{4/16, -3/16},
+			{4/16, -3/16},
+			{4/16, -4/16},
+			{4/16, -5/16},
+			{4/16, -5/16}
+		},
+		{--y=4
+			{1/16, -2/16},
+			{-1/16, -3/16},
+			{-4/16, -1/16},
+			{-4/16, -3/16},
+			{-4/16, -3/16},
+			{-4/16, -2/16},
+			{-4/16, -1/16},
+			{-4/16, -1/16}
+		}
+	}
+}
+
 entities.man = {
 	group = "char",
 	control = {
@@ -11,12 +56,13 @@ entities.man = {
 		attack = "Space"
 	},
 	movement = {
-		dx = 0,
-		dy = 0,
+		dx = 0, dy = 0,	-- instantaneous movement controls in tiles/second
+		mx = 0, my = 0,	-- momentum in tiles/second
+		friction = 16, -- in tiles / second^2
 		is_moving = false
 	},
 	position = {
-		x = "$1", y = "$2",
+		x = "$1", y = "$2", z = nil,
 		w = 14/16, h = 19/16,
 		r = "$3"
 	},
@@ -42,71 +88,69 @@ entities.man = {
 
 		actions = {
 			stand = {
-				img = "walk",
 				frames = {2},
-				framesw = 3,
-				duration = inf,
+				framesw = 8,
+				angles = {0},
+				hitboxs = {false},
+				base_duration = inf,
 				interruptable = true,
 				stop = "stand"
 			},
 			walk = {
-				img = "walk",
 				frames = {1, 2, 3, 2},
-				framesw = 3,
-				duration = .7,
+				framesw = 8,
+				angles = {0, 0, 0, 0},
+				hitboxs = {false, false, false, false},
+				base_duration = 3,
 				interruptable = true,
 				stop = "stand"
 			},
-			stab = {
-				img = "attack",
-				frames = {1},
-				framesw = 4,
-				duration = .3,
+			attack = {
+				frames = {1, 1, 6, 6, 6, 6},
+				framesw = 8,
+				angles = {0, 0, 0, 0, 0, 0},
+				hitboxs = {false, false, true, true, true, true}, 
+				base_duration = .25,
 				interruptable = false,
-				stop = "stand",
-				combos = {
-					stab = "swing"
-				}
+				stop = "stand"
 			},
-			swing = {
-				img = "attack",
-				frames = {1},
-				framesw = 4,
-				duration = .6,
+			swing_right = {
+				frames = {4, 4, 5, 5, 6, 6, 6, 7, 7, 8, 8},
+				framesw = 8,
+				angles = {90, 70, 50, 30, 10, 0, -10, -30, -50, -70, -90},
+				hitboxs = {true, true, true, true, true, true, true, true, true, true, true}, 
+				base_duration = .6,
 				interruptable = false,
-				stop = "stand",
-				combos = {
-					stab = "cswing"
-				}
+				stop = "stand"
 			},
-			cswing = {
-				img = "attack",
-				frames = {1},
-				framesw = 4,
-				duration = .6,
+			swing_left = {
+				frames = {8, 8, 7, 7, 6, 6, 6, 5, 5, 4, 4},
+				framesw = 8,
+				angles = {-90, -70, -50, -30, -10, 0, 10, 30, 50, 70, 90},
+				hitboxs = {true, true, true, true, true, true, true, true, true, true, true}, 
+				base_duration = .6,
 				interruptable = false,
-				stop = "stand",
-				combos = {
-					stab = "swing"
-				}
+				stop = "stand"
 			}
 		}
 	},
 	sprite = {
-		img_base = "man",
-		img = "man_stand.png",
+		img = "man_walk.png",
 		framex = 2,
 		framey = 1,
 		totalframesx = 3,
 		totalframesy = 4,
 		time = 0
+	},
+	hand = {
+		item = nil
 	}
 }
 
 entities.block = {
 	group = "obj",
 	position = {
-		x = "$1", y = "$2",
+		x = "$1", y = "$2", z = nil,
 		w = 1, h = 1,
 		r = "$3"
 	},
@@ -128,7 +172,7 @@ entities.block = {
 entities.sword = {
 	group = "item",
 	position = {
-		x = "$1", y = "$2",
+		x = "$1", y = "$2", z = nil,
 		w = 16/16, h = 5/16,
 		r = "$3"
 	},
@@ -144,6 +188,47 @@ entities.sword = {
 		framey = 1,
 		totalframesx = 1,
 		totalframesy = 1
+	},
+	holdable = {
+		offx = -6/16,
+		offy = 0,
+		collision = {
+			offx = 2/16,
+			offy = 0,
+			w = 12/16,
+			h = 5/16
+		},
+		hitbox = {
+			hit_ids = {},
+			-- effects are status effects like paralysis, burns, etc
+			effects = {
+				-- type = duration? strength?
+			},
+			-- straight damage
+			damage = {
+				-- type = amount
+			}
+		},
+		actions = {
+			attack = {
+				duration = .2,
+				combos = {
+					attack = "swing_right"
+				}
+			},
+			swing_right = {
+				duration = .3,
+				combos = {
+					attack = "swing_right"
+				}
+			},
+			swing_left = {
+				duration = .3,
+				combos = {
+					attack = "swing_right"
+				}
+			}
+		}
 	}
 }
 
