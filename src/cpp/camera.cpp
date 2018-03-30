@@ -24,6 +24,8 @@ SDL_Rect Rect::convert()
 		};
 }
 
+/*
+
 bool Rect::collide(const Rect &r2)
 {
 	Rect &r1 = *this;
@@ -136,6 +138,7 @@ void Rect::resolve(const Rect &r2, Point &p)
 		p.x = r1.x;
 	}
 }
+*/
 
 DrawUnion::DrawUnion(){};
 DrawUnion::~DrawUnion(){};
@@ -323,11 +326,23 @@ void Camera::draw(DrawContainer &dc)
 							- spr.dest.y*TILE_SIZE*scaley 
 							- (.5 * renderRect.h);
 
-			SDL_Rect out{(int)renderRect.x, (int)renderRect.y, (int)renderRect.w, (int)renderRect.h};
+			SDL_Rect out{
+				(int)round(renderRect.x),
+				(int)round(renderRect.y),
+				(int)round(renderRect.w),
+				(int)round(renderRect.h)
+			};
 
 			//std::cout << renderRect.x << " " << renderRect.y << std::endl;
+			if (spr.flash)
+			{
+				std::cout << "FLASH" << std::endl;
+				SDL_SetTextureColorMod(texture, 255, 0, 0);
+			}
 
 			SDL_RenderCopyEx(this->render, texture, &frame, &out, -1*spr.rotation, nullptr, SDL_FLIP_NONE);
+
+			SDL_SetTextureColorMod(texture, 255, 255, 255);
 		}
 		else if (it.type == 3)
 		{

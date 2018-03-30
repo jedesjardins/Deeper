@@ -9,11 +9,12 @@
 #include "clock.hpp"
 #include "camera.hpp"
 #include "input.hpp"
+#include "collision.hpp"
 
 
 //Screen dimension constants
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
+const int SCREEN_WIDTH = 800;
+const int SCREEN_HEIGHT = 600;
 
 void registerUsertypes(sol::state &lua)
 {
@@ -27,10 +28,12 @@ void registerUsertypes(sol::state &lua)
 		"y", &Rect::y,
 		"w", &Rect::w,
 		"h", &Rect::h,
+		"r", &Rect::r);
+		/*
 		"collide", &Rect::collide,
 		"resolve", &Rect::resolve,
 		"resolveBoth", &Rect::resolveBoth
-		);
+		);*/
 
 	lua.new_usertype<DrawItemSprite>("DrawItemSprite",
 		"texturename", &DrawItemSprite::texturename,
@@ -38,8 +41,9 @@ void registerUsertypes(sol::state &lua)
 		"framey", &DrawItemSprite::framey,
 		"totalframesx", &DrawItemSprite::totalframesx,
 		"totalframesy", &DrawItemSprite::totalframesy,
+		"rotation", &DrawItemSprite::rotation,
 		"dest", &DrawItemSprite::dest,
-		"rotation", &DrawItemSprite::rotation
+		"flash", &DrawItemSprite::flash
 		);
 
 	lua.new_usertype<DrawItemTextBox>("DrawItemTextBox",
@@ -98,6 +102,10 @@ void registerUsertypes(sol::state &lua)
 		"update", &Input::update,
 		"getKeyState", &Input::getKeyState
 		);
+
+	lua["collide_test"] = &collide;
+
+	lua["delay"] = &SDL_Delay;
 }
 
 

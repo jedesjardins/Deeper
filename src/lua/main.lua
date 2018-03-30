@@ -14,7 +14,11 @@ Debug = require(LUA_FOLDER .. 'engine.debug')		-- debug function
 math.randomseed(os.time())
 
 function math.sign(x)
-  return (x < 0 and -1) or (x > 0 and 1) or 0
+	return (x < 0 and -1) or (x > 0 and 1) or 0
+end
+
+function math.clamp(val, min, max)
+	return (val < min and min) or (val > max and max) or val
 end
 
 KS = KEYSTATE.new()

@@ -15,21 +15,30 @@ function state:enter()
 	self.ecs:addSystem(systems.updateCollision)
 	self.ecs:addSystem(systems.updateAnimation)
 	self.ecs:addDrawSystem(systems.draw)
-	self.ecs:addDrawSystem(systems.drawHitbox)
+	--self.ecs:addDrawSystem(systems.drawHitbox)
 
-	local id1 = self.ecs:addEntity("man", {0, 0, 0})
-	local id2 = self.ecs:addEntity("sword", {1, 0, 0})
-	local id3 = self.ecs:addEntity("block", {-2, 1, 0})
-	local id4 = self.ecs:addEntity("block", {-2, 1.5, 0})
+	player_id = self.ecs:addEntity("man", {0, 0})
+	local id2 = self.ecs:addEntity("sword", {2, 0})
 
-	local id5 = self.ecs:addEntity("man", {0, 0, 0})
+	for x=-5, 5 do
+		self.ecs:addEntity("block", {x, 3})
+		self.ecs:addEntity("block", {x, -3})
+	end
+
+	for y = -2, 2 do
+		self.ecs:addEntity("block", {5, y})
+		self.ecs:addEntity("block", {-5, y})
+	end
+
+	local id5 = self.ecs:addEntity("man", {0, 0})
+
 	self.ecs.components.control[id5] = nil
 
 	self.vp = Rect.new()
 	self.vp.x = 0
 	self.vp.y = 0
-	self.vp.w = 5
-	self.vp.h = 3.75
+	self.vp.w = 10
+	self.vp.h = 7.5
 
 	self.rotation = 0
 
@@ -44,11 +53,19 @@ function state:exit()
 end
 
 function state:update(dt, input)
+
+	print(dt)
+
 	if input:getKeyState("Escape") == KS.PRESSED then
 		return {{"pop", 1}}
 	end
 
-	return self.ecs:update(dt, input) or {}
+	self.ecs:update(dt, input)
+
+	self.vp.x = state.ecs.components.position[player_id].x
+	self.vp.y = state.ecs.components.position[player_id].y
+
+	return {}
 end
 
 function state:draw(drawcontainer)

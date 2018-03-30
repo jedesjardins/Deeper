@@ -23,6 +23,7 @@ struct Rect{
 	double y;
 	double w;
 	double h;
+	double r;
 
 	SDL_Rect convert();
 	bool collide(const Rect&);
@@ -47,6 +48,7 @@ struct DrawItemSprite
 	unsigned totalframesy;
 	double rotation;
 	Rect dest;
+	bool flash;
 };
 
 struct DrawItemTextBox

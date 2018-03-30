@@ -10,10 +10,10 @@ uint32_t Clock::getTime()
 	return SDL_GetTicks();
 }
 
-uint32_t Clock::tick(uint32_t framerate)
+float Clock::tick(uint32_t framerate)
 {
-	uint32_t currenttime = this->getTime();
-	uint32_t elapsedtime = currenttime - this->lastframetime;
+	float currenttime = this->getTime();
+	float elapsedtime = currenttime - this->lastframetime;
 
 	if(framerate == 0)
 	{
@@ -23,7 +23,7 @@ uint32_t Clock::tick(uint32_t framerate)
 	{
 		float goaldt = 1000.0/framerate;
 
-		uint32_t timetowait = uint32_t(goaldt) - elapsedtime;
+		uint32_t timetowait = uint32_t(floor(goaldt)) - elapsedtime;
 
 		if(uint32_t(goaldt) > elapsedtime)
 		{

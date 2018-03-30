@@ -51,7 +51,6 @@ function systems.control(ecs, dt, input)
 				ecs.components.movement[item_id] = {
 														dx = 0, dy = 0,	-- instantaneous movement controls in tiles/second
 														mx = x, my = y,	-- momentum in tiles/second
-														friction = 16, -- in tiles / second^2
 														is_moving = false
 													}
 			end
@@ -146,21 +145,27 @@ end
 function systems.updatePosition(ecs, dt, input)
 	local entities = ecs:requireAll("movement", "position")
 
+	local friction = 20
+
 	for _, id in ipairs(entities) do
-		--TODO: Remove this if to allow movement
-		--if (ecs.components.hand[id] and ecs.components.hand[id].item == nil) or not ecs.components.hand[id] then
 		local pos = ecs.components.position[id]
 		local movement = ecs.components.movement[id]
 		pos.x = pos.x + movement.dx + movement.mx*dt/1000
 		pos.y = pos.y + movement.dy + movement.my*dt/1000
 		pos.z = pos.y - pos.h/2
 
-		local nx = math.abs(movement.mx)-(movement.friction*dt/1000)
-		local ny = math.abs(movement.my)-(movement.friction*dt/1000)
+		local nx = math.abs(movement.mx)-(friction*dt/1000)
+		local ny = math.abs(movement.my)-(friction*dt/1000)
 
 		movement.mx = nx > 0 and nx*math.sign(movement.mx) or 0
 		movement.my = ny > 0 and ny*math.sign(movement.my) or 0
-		--end
+
+		if movement.dx ~= 0 or movement.dy ~= 0 or movement.mx ~= 0 or movement.my ~= 0 then 
+			movement.is_moving = true
+		else
+			movement.is_moving = false
+		end
+		
 	end	
 end
 
@@ -246,7 +251,12 @@ end
 function systems.updateCollision(ecs, dt, input)
 	local entities = ecs:requireAll("position", "collision")
 
+	axis_count = 0
+
 	for _, id in ipairs(entities) do
+	--for i = 1, #entities do
+		--local id = entities[i]
+
 		local pos = ecs.components.position[id]
 		local col = ecs.components.collision[id]
 		local mov = ecs.components.movement[id]
@@ -260,6 +270,9 @@ function systems.updateCollision(ecs, dt, input)
 			)
 
 			for _, id2 in ipairs(entities) do
+			--for j = i + 1, #entities do
+				--local id2 = entities[j]
+
 				if id ~= id2 and ecs.components.held[id2] ~= id then
 					local pos2 = ecs.components.position[id2]
 					local col2 = ecs.components.collision[id2]
@@ -274,21 +287,15 @@ function systems.updateCollision(ecs, dt, input)
 
 						local does_collide, correction_vect = collision.collide(p1, p2)
 
+
 						if does_collide then
-							local mov2 = ecs.components.movement[id2]
 
-							-- if theres hitboxes, apply the damage back and forth
-							--TODO(JAMES): Do hitbox stuff here
-							if ecs.components.hitbox[id] and not ecs.components.hitbox[id].hit_ids[id2] then
-								ecs.components.hitbox[id].hit_ids[id2] = true
-								print(id, "effects", id2)
-							end
+							collide_test(
+								{x=pos.x+col.offx, y=pos.y+col.offy, w=col.w, h=col.h, rx=pos.x, ry=pos.y, r=pos.r},
+								{x=pos2.x+col2.offx, y=pos2.y+col2.offy, w=col2.w, h=col2.h, rx=pos2.x, ry=pos2.y, r=pos2.r},
+								{})
 
-							if ecs.components.hitbox[id2] and not ecs.components.hitbox[id2].hit_ids[id] then
-								ecs.components.hitbox[id2].hit_ids[id] = true
-								print(id2, "effects", id)
-							end
-
+							-- pickup item or resolve 
 							if group2 == "item" then
 								-- try to pickup item
 								if hand and not ecs.components.held[id2] then
@@ -312,25 +319,41 @@ function systems.updateCollision(ecs, dt, input)
 									-- to lock on add lock on component, calculate offset from pos2
 									-- remove collision component to stop it from moving around
 								end
-							else if mov and mov2 and mov.is_moving and mov2.is_moving then
+							else if mov and (mov.is_moving) -- or mov.mx ~= 0 or mov.my ~= 0)
+								and mov2 and (mov2.is_moving) then --or mov2.mx ~= 0 or mov2.my ~= 0) then
 								-- move both
-
 								pos.x = pos.x + (correction_vect.x)/2
 								pos.y = pos.y + (correction_vect.y)/2
 
+								if math.sign(correction_vect.x) ~= math.sign(mov.mx) then mov.mx = 0 end
+								if math.sign(correction_vect.y) ~= math.sign(mov.my) then mov.my = 0 end
+								--mov.mx, mov.my = 0, 0
+
 								pos2.x = pos2.x - (correction_vect.x)/2
 								pos2.y = pos2.y - (correction_vect.y)/2
-							else if mov and mov.is_moving then
-								-- move id
 
+								if math.sign(correction_vect.x) == math.sign(mov2.mx) then mov2.mx = 0 end
+								if math.sign(correction_vect.y) == math.sign(mov2.my) then mov2.my = 0 end
+								--mov2.mx, mov2.my = 0, 0
+							else if mov and (mov.is_moving) then -- or mov.mx ~= 0 or mov.my ~= 0) then
+								-- move id
 								pos.x = pos.x + (correction_vect.x)
 								pos.y = pos.y + (correction_vect.y)
 
-							else if mov2 and mov2.is_moving then
+								if math.sign(correction_vect.x) ~= math.sign(mov.mx) then mov.mx = 0 end
+								if math.sign(correction_vect.y) ~= math.sign(mov.my) then mov.my = 0 end
+								--mov.mx, mov.my = 0, 0
+
+							else if mov2 and (mov2.is_moving) then -- or mov2.mx ~= 0 or mov2.my ~= 0) then
+
 								-- move id2
 
 								pos2.x = pos2.x - (correction_vect.x)
 								pos2.y = pos2.y - (correction_vect.y)
+
+								if math.sign(correction_vect.x) == math.sign(mov2.mx) then mov2.mx = 0 end
+								if math.sign(correction_vect.y) == math.sign(mov2.my) then mov2.my = 0 end
+								--mov2.mx, mov2.my = 0, 0
 							else
 								-- move id
 								pos.x = pos.x + (correction_vect.x)/2
@@ -339,6 +362,38 @@ function systems.updateCollision(ecs, dt, input)
 								pos2.x = pos2.x - (correction_vect.x)/2
 								pos2.y = pos2.y - (correction_vect.y)/2
 							end end end end
+
+							-- if theres hitboxes, apply the damage back and forth
+							--TODO(JAMES): Do hitbox stuff here
+
+							if ecs.components.hitbox[id] and not ecs.components.hitbox[id].hit_ids[id2] then
+								ecs.components.hitbox[id].hit_ids[id2] = true
+								--print(id, "effects", id2)
+
+
+								ecs.components.sprite[id2].flash = 6*dt
+							end
+
+							if ecs.components.hitbox[id2] and not ecs.components.hitbox[id2].hit_ids[id] 
+								and ecs.components.held[id2] ~= id then -- this checks if id2 wasn't picked up by id
+								ecs.components.hitbox[id2].hit_ids[id] = true
+								--print(id2, "effects", id)
+
+								ecs.components.sprite[id].flash = 4*dt
+
+								local t_pos = ecs.components.position[ecs.components.held[id2]] or pos2
+
+								local dx = pos.x - t_pos.x
+								local dy = pos.y - t_pos.y
+
+								--print(dx/dy, dy/dx)
+
+								if mov then
+									mov.mx = math.clamp(math.abs(dx/dy), 0, 1) * math.sign(dx) * 6
+									mov.my = math.clamp(math.abs(dy/dx), 0, 1) * math.sign(dy) * 6
+								end
+								
+							end
 
 							-- reset new points after moved
 							p1 = collision.getPointsAround(
@@ -351,6 +406,7 @@ function systems.updateCollision(ecs, dt, input)
 			end
 		end
 	end
+	--print(axis_count)
 end
 
 function systems.updateState(ecs, dt, input)
@@ -421,22 +477,28 @@ function systems.updateState(ecs, dt, input)
 end
 
 function systems.updateAnimation(ecs, dt, input)
-	local entities = ecs:requireAll("sprite", "state")
+	local entities = ecs:requireAll("sprite")
 
 	for _, id in ipairs(entities) do
 		local sprite = ecs.components.sprite[id]
 		local state = ecs.components.state[id]
 
-		local duration = state.action.duration
-		local percent = (state.time%duration)/duration
-		local frameindex = math.floor(percent * #state.action.frames) + 1
+		if state then 
+			local duration = state.action.duration
+			local percent = (state.time%duration)/duration
+			local frameindex = math.floor(percent * #state.action.frames) + 1
 
-		sprite.framex = state.action.frames[frameindex]
+			sprite.framex = state.action.frames[frameindex]
 
-		sprite.framey = state.direction_to_y[state.direction]
+			sprite.framey = state.direction_to_y[state.direction]
 
-		sprite.totalframesx = state.action.framesw
-		sprite.totalframesy = 4
+			sprite.totalframesx = state.action.framesw
+			sprite.totalframesy = 4
+
+			sprite.flash = (sprite.flash == nil and 0) or (sprite.flash - dt >= 0 and sprite.flash - dt) or 0
+		else
+			sprite.flash = 0
+		end
 	end
 end
 
@@ -450,7 +512,13 @@ function systems.draw(ecs, drawcontainer)
 
 		local di = DrawItem:new(2)
 		local itemsprite = di.data.sprite
-		itemsprite.texturename = sprite.img
+
+		if sprite.flash ~= nil and sprite.flash > 0 then
+			itemsprite.texturename = sprite.img.."_white.png"
+		else
+			itemsprite.texturename = sprite.img..".png"
+		end
+
 		itemsprite.framex = sprite.framex
 		itemsprite.framey = sprite.framey
 		itemsprite.totalframesx = sprite.totalframesx
@@ -498,6 +566,8 @@ function systems.drawHitbox(ecs, drawcontainer)
 		itemsprite.totalframesy = 1
 
 		itemsprite.rotation = position.r
+
+		itemsprite.flash = false
 
 		local px = collision.offx
 		local py = collision.offy

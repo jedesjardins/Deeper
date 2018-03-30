@@ -58,13 +58,12 @@ entities.man = {
 	movement = {
 		dx = 0, dy = 0,	-- instantaneous movement controls in tiles/second
 		mx = 0, my = 0,	-- momentum in tiles/second
-		friction = 16, -- in tiles / second^2
 		is_moving = false
 	},
 	position = {
 		x = "$1", y = "$2", z = nil,
 		w = 14/16, h = 19/16,
-		r = "$3"
+		r = 0
 	},
 	collision = {
 		offx = 0,
@@ -101,7 +100,7 @@ entities.man = {
 				framesw = 8,
 				angles = {0, 0, 0, 0},
 				hitboxs = {false, false, false, false},
-				base_duration = 3,
+				base_duration = .7,
 				interruptable = true,
 				stop = "stand"
 			},
@@ -135,7 +134,7 @@ entities.man = {
 		}
 	},
 	sprite = {
-		img = "man_walk.png",
+		img = "man",
 		framex = 2,
 		framey = 1,
 		totalframesx = 3,
@@ -152,7 +151,7 @@ entities.block = {
 	position = {
 		x = "$1", y = "$2", z = nil,
 		w = 1, h = 1,
-		r = "$3"
+		r = 0
 	},
 	collision = {
 		offx = 0,
@@ -161,7 +160,7 @@ entities.block = {
 		h = 1
 	},
 	sprite = {
-		img = "block.png",
+		img = "block",
 		framex = 1,
 		framey = 1,
 		totalframesx = 1,
@@ -174,7 +173,7 @@ entities.sword = {
 	position = {
 		x = "$1", y = "$2", z = nil,
 		w = 16/16, h = 5/16,
-		r = "$3"
+		r = 0
 	},
 	collision = {
 		offx = 0,
@@ -183,7 +182,7 @@ entities.sword = {
 		h = 5/16
 	},
 	sprite = {
-		img = "sword.png",
+		img = "sword",
 		framex = 1,
 		framey = 1,
 		totalframesx = 1,

@@ -43,6 +43,9 @@ function collision.collide(A, B)--r1, r2)
 			min.axis = axis
 			min.sign = sign
 		end
+
+		axis_count = axis_count + 1
+		if min.overlap == 0 then break end
 	end
 
 	--TODO(James): floating point rounding error, min.overlap can be super fuckin tiny amounts of error
