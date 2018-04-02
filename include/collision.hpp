@@ -5,6 +5,7 @@
 #include <vector>
 #include <utility>
 #include <cmath>
+#include <iomanip>
 
 #include "sol.hpp"
 #include "camera.hpp"
@@ -49,9 +50,9 @@ collide(sol::table t1, sol::table t2, sol::table output)
 	r2.h = t2["h"];
 	r2.r = t2["r"];
 
-	
-		
-
+	double min_overlap = 1000000;
+	double new_overlap;
+	std::pair<double, double> min_axis{};
 	
 	if (r1.r != 0 || r2.r != 0) 
 	{
@@ -79,28 +80,102 @@ collide(sol::table t1, sol::table t2, sol::table output)
 			}
 		};
 
-		double min_overlap = 1000000;
-
 		for (auto axis: axi)
 		{
 			double mag = magnitude(axis);
 			axis.first = axis.first/mag;
 			axis.second = axis.second/mag;
 
-			min_overlap = fmin(min_overlap, overlap(axis, A, B));
+			new_overlap = overlap(axis, A, B);
+
+			if (abs(new_overlap) < abs(min_overlap))
+			{
+				min_overlap = new_overlap;
+				min_axis = axis;
+			}
+
+			if (min_overlap == 0) break;
 		}
 
-		std::cout << "Rotated Collision: " << (min_overlap != 0) << std::endl;
+		output["overlap"] = min_overlap;
+		output["x"] = min_axis.first*min_overlap;
+		output["y"] = min_axis.second*min_overlap;
 	}
 	else
 	{
+		/*
 		std::cout << "Square Collision: " << 
 		(r1.x - r1.w/2 < r2.x + r2.w/2
 		&& r1.x + r1.w/2 > r2.x - r2.w/2
 		&& r1.y + r1.h/2 > r2.y - r2.h/2
 		&& r1.y - r1.h/2 < r2.y + r2.h/2)
 		<< std::endl;
+		*/
+		
+		if (r1.x - r1.w/2 < r2.x + r2.w/2) //r1 to the right of r2
+		{
+			new_overlap = (r2.x + r2.w/2) - (r1.x - r1.w/2);
+			if (abs(new_overlap) < abs(min_overlap))
+			{
+				min_overlap = new_overlap;
+				min_axis = {1, 0};
+			}
+		}
+		else
+		{
+			output["overlap"] = 0;
+			return;
+		}
+
+		if (r1.x + r1.w/2 > r2.x - r2.w/2) //r1 to the left of r2
+		{
+			new_overlap = (r2.x - r2.w/2) - (r1.x + r1.w/2);
+			if (abs(new_overlap) < abs(min_overlap))
+			{
+				min_overlap = new_overlap;
+				min_axis = {1, 0};
+			}
+		}
+		else
+		{
+			output["overlap"] = 0;
+			return;
+		}
+
+		if (r1.y + r1.h/2 > r2.y - r2.h/2) //r1 below r2
+		{
+			new_overlap = (r2.y - r2.h/2) - (r1.y + r1.h/2);
+			if (abs(new_overlap) < abs(min_overlap))
+			{
+				min_overlap = new_overlap;
+				min_axis = {0, 1};
+			}
+		}
+		else
+		{
+			output["overlap"] = 0;
+			return;
+		}
+
+		if (r1.y - r1.h/2 < r2.y + r2.h/2) //r1 above r2
+		{
+			new_overlap = (r2.y + r2.h/2) - (r1.y - r1.h/2);
+			if (abs(new_overlap) < abs(min_overlap))
+			{
+				min_overlap = new_overlap;
+				min_axis = {0, 1};
+			}
+		}
+		else
+		{
+			output["overlap"] = 0;
+			return;
+		}
 	}
+
+	output["overlap"] = min_overlap;
+	output["x"] = min_axis.first*min_overlap;
+	output["y"] = min_axis.second*min_overlap;
 }
 
 std::vector<std::pair<double, double>>
@@ -151,7 +226,7 @@ overlap(const std::pair<double, double> &axis,
 	else
 	{
 		if (aMax - bMin < bMax - aMin)
-			return aMax - bMin;
+			return bMin - aMax;
 		else
 			return bMax - aMin;
 	}
@@ -168,8 +243,8 @@ projectPoints(const std::pair<double, double> &axis,
 	for (auto p: A)
 	{
 		val = (axis.first*p.first)+(axis.second*p.second);
-		v_min = fmin(v_min, val);
-		v_max = fmax(v_max, val);
+		v_min = v_min < val ? v_min : val;
+		v_max = v_max > val ? v_max : val;
 	}
 
 	return {v_min, v_max};	

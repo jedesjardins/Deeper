@@ -1,19 +1,5 @@
 #include "camera.hpp"
 
-/*
-std::ostream& operator<<(std::ostream &os, const Rect &rect)
-{
-    os << rect.x << " " << rect.y << " " << rect.w << " " << rect.h;
-    return os;
-}
-
-std::ostream& operator<<(std::ostream &os, const Camera &camera)
-{
-    os << camera.vp.x << " " << camera.vp.y << " " << camera.vp.w << " " << camera.vp.h;
-    return os;
-}
-*/
-
 SDL_Rect Rect::convert()
 {
 	return SDL_Rect{
@@ -23,122 +9,6 @@ SDL_Rect Rect::convert()
 		(int)floor(this->h)
 		};
 }
-
-/*
-
-bool Rect::collide(const Rect &r2)
-{
-	Rect &r1 = *this;
-
-	return 
-		r1.x - r1.w/2 < r2.x + r2.w/2
-		&& r1.x + r1.w/2 > r2.x - r2.w/2
-		&& r1.y + r1.h/2 > r2.y - r2.h/2
-		&& r1.y - r1.h/2 < r2.y + r2.h/2;
-}
-
-void calculateOverlap(const Rect &r1, const Rect &r2, double &overlap_x, double &overlap_y)
-{
-	if(r1.x < r2.x)
-	{
-		overlap_x = (r1.x + r1.w/2) - (r2.x - r2.w/2);
-	}
-	else
-	{
-		overlap_x = (r2.x + r2.w/2) - (r1.x - r1.w/2);
-	}
-
-	if(r1.y < r2.y)
-	{
-		overlap_y = (r1.y + r1.h/2) - (r2.y - r2.h/2);
-	}
-	else
-	{
-		overlap_y = (r2.y + r2.h/2) - (r1.y - r1.h/2);
-	}
-}
-
-void Rect::resolveBoth(const Rect &r2, Point &p1, Point &p2)
-{
-	Rect &r1 = *this;
-
-	//calculate overlap in each dimension
-	double overlap_x, overlap_y;
-
-	calculateOverlap(r1, r2, overlap_x, overlap_y);
-
-	if (overlap_x < overlap_y)
-	{
-		//undo x motion
-		if(r1.x < r2.x)
-		{
-			p1.x = r1.x - overlap_x/2;
-			p2.x = r2.x + overlap_x/2;
-		}
-		else
-		{
-			p1.x = r1.x + overlap_x/2;
-			p2.x = r2.x - overlap_x/2;
-		}
-		p1.y = r1.y;
-		p2.y = r2.y;
-	}
-	else
-	{
-		//undo y motion
-		if(r1.y < r2.y)
-		{
-			p1.y = r1.y - overlap_y/2;
-			p2.y = r2.y + overlap_y/2;
-		}
-		else
-		{
-			p1.y = r1.y + overlap_y/2;
-			p2.y = r2.y - overlap_y/2;
-		}
-		p1.x = r1.x;
-		p2.x = r2.x;
-	}
-}
-
-void Rect::resolve(const Rect &r2, Point &p)
-{
-	Rect &r1 = *this;
-
-	double overlap_x, overlap_y;
-
-	calculateOverlap(r1, r2, overlap_x, overlap_y);
-
-	//TODO(James): THIS IS A SLOPPY FIX FOR INTERNAL EDGES
-	if(overlap_x == overlap_y)
-		overlap_x -= 0.0001;
-	
-	if(overlap_x < overlap_y)
-	{
-		if(r1.x < r2.x)
-		{
-			p.x = r1.x - overlap_x;
-		}
-		else
-		{
-			p.x = r1.x + overlap_x;
-		}
-		p.y = r1.y;
-	}
-	else
-	{
-		if(r1.y < r2.y)
-		{
-			p.y = r1.y - overlap_y;
-		}
-		else
-		{
-			p.y = r1.y + overlap_y;
-		}
-		p.x = r1.x;
-	}
-}
-*/
 
 DrawUnion::DrawUnion(){};
 DrawUnion::~DrawUnion(){};
@@ -333,16 +203,31 @@ void Camera::draw(DrawContainer &dc)
 				(int)round(renderRect.h)
 			};
 
-			//std::cout << renderRect.x << " " << renderRect.y << std::endl;
-			if (spr.flash)
-			{
-				std::cout << "FLASH" << std::endl;
-				SDL_SetTextureColorMod(texture, 255, 0, 0);
-			}
-
 			SDL_RenderCopyEx(this->render, texture, &frame, &out, -1*spr.rotation, nullptr, SDL_FLIP_NONE);
 
-			SDL_SetTextureColorMod(texture, 255, 255, 255);
+			if (spr.life <= .75)
+			{
+				SDL_SetTextureColorMod(texture, 255, (spr.life*255), (spr.life*255));
+				spr.life += 0.05; // black sprite borders aren't 
+				//std::cout << frame.y << " " << frame.h << std::endl;
+				int diff = (double)frame.h - spr.life*frame.h;
+				frame.h -= diff;
+				frame.y += diff;
+				//std::cout << frame.y << " " << frame.h << " " << diff << "\n" << std::endl;
+
+				diff = (double)out.h - spr.life*out.h;
+				diff = diff - diff%(int)scaley;
+				out.h -= diff;
+				out.y += diff;
+
+				//std::cout << diff << " " << scaley << std::endl;
+
+				SDL_RenderCopyEx(this->render, texture, &frame, &out, -1*spr.rotation, nullptr, SDL_FLIP_NONE);
+
+				SDL_SetTextureColorMod(texture, 255, 255, 255);
+			}
+
+			
 		}
 		else if (it.type == 3)
 		{

@@ -128,6 +128,7 @@ function ECS:addEntity(name, scratch)
 	local entity = self.presets[name]
 	if not entity then
 		Debug:writeln("ECS","No entity", name)
+		return nil
 	end
 
 	return self:addEntityFromTable(entity, scratch)

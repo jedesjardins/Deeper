@@ -130,7 +130,8 @@ local hitboxes = {
 		},
 		projectile = {
 			delete_on_collision = true,
-			stop_on_collision = true
+			stop_on_collision = true,
+			can_pickup = true
 		}
 	},
 	arrow_hitbox = {

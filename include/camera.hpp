@@ -37,6 +37,8 @@ struct DRAWITEMTYPE {
 	int SPRITE = 2;
 	int TEXTBOX = 3;
 	int OPTIONBOX = 4;
+	//TODO
+	int UISPRITE = 5;
 };
 
 struct DrawItemSprite
@@ -48,7 +50,7 @@ struct DrawItemSprite
 	unsigned totalframesy;
 	double rotation;
 	Rect dest;
-	bool flash;
+	double life;
 };
 
 struct DrawItemTextBox
@@ -70,12 +72,25 @@ struct DrawItemOptionBox
 	double h;
 };
 
+struct DrawUISprite
+{
+	std::string texturename;
+	unsigned framex;
+	unsigned framey;
+	unsigned totalframesx;
+	unsigned totalframesy;
+	double rotation;
+	Rect dest;
+	bool flash;
+};
+
 struct DrawUnion
 {
 	Rect rect;
 	DrawItemSprite sprite;
 	DrawItemTextBox textbox;
 	DrawItemOptionBox optionbox;
+	DrawUISprite uisprite;
 
 	DrawUnion();
 	~DrawUnion();

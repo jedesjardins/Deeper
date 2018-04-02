@@ -43,7 +43,7 @@ void registerUsertypes(sol::state &lua)
 		"totalframesy", &DrawItemSprite::totalframesy,
 		"rotation", &DrawItemSprite::rotation,
 		"dest", &DrawItemSprite::dest,
-		"flash", &DrawItemSprite::flash
+		"life", &DrawItemSprite::life
 		);
 
 	lua.new_usertype<DrawItemTextBox>("DrawItemTextBox",

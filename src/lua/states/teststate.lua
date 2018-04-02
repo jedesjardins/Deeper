@@ -3,22 +3,31 @@ local state = STATE.new()
 local systems = require(LUA_FOLDER .. 'data.systems')
 local entities = require(LUA_FOLDER .. 'data.entities')
 
+life = 1
+
 function state:enter()
 	self.ecs = ECS:new()
 	self.ecs:addPresets(entities)
 
-	self.ecs:addBeginSystem(systems.control)
+	self.ecs:addBeginSystem(systems.controlPlayer)
 	self.ecs:addSystem(systems.updatePosition)
-	--self.ecs:addSystem(systems.updateLock)
+	self.ecs:addSystem(systems.updateLock)
 	self.ecs:addSystem(systems.updateState)
 	self.ecs:addSystem(systems.updateHeldItem)
 	self.ecs:addSystem(systems.updateCollision)
+	self.ecs:addSystem(systems.updateEffects)
+	self.ecs:addSystem(systems.ignore)
 	self.ecs:addSystem(systems.updateAnimation)
+	self.ecs:addEndSystem(systems.lifetime)
 	self.ecs:addDrawSystem(systems.draw)
 	--self.ecs:addDrawSystem(systems.drawHitbox)
 
-	player_id = self.ecs:addEntity("man", {0, 0})
-	local id2 = self.ecs:addEntity("sword", {2, 0})
+	self.player_id = self.ecs:addEntity("man", {0, 0})
+	local id2 = self.ecs:addEntity("sword", {2, 1})
+	local id4 = self.ecs:addEntity("rapier", {2, -1})
+
+	local id3 = self.ecs:addEntity("man", {-2, 0})
+	self.ecs.components.control[id3] = nil
 
 	for x=-5, 5 do
 		self.ecs:addEntity("block", {x, 3})
@@ -29,10 +38,6 @@ function state:enter()
 		self.ecs:addEntity("block", {5, y})
 		self.ecs:addEntity("block", {-5, y})
 	end
-
-	local id5 = self.ecs:addEntity("man", {0, 0})
-
-	self.ecs.components.control[id5] = nil
 
 	self.vp = Rect.new()
 	self.vp.x = 0
@@ -54,7 +59,7 @@ end
 
 function state:update(dt, input)
 
-	print(dt)
+	--print(dt)
 
 	if input:getKeyState("Escape") == KS.PRESSED then
 		return {{"pop", 1}}
@@ -62,8 +67,8 @@ function state:update(dt, input)
 
 	self.ecs:update(dt, input)
 
-	self.vp.x = state.ecs.components.position[player_id].x
-	self.vp.y = state.ecs.components.position[player_id].y
+	self.vp.x = state.ecs.components.position[self.player_id].x
+	self.vp.y = state.ecs.components.position[self.player_id].y
 
 	return {}
 end

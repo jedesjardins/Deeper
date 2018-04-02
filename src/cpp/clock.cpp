@@ -32,11 +32,13 @@ float Clock::tick(uint32_t framerate)
 		}
 	}
 
+	/*
 	if(this->pastframesqueue.size() == 10)
 		this->pastframesqueue.pop_back();
 	
 	this->pastframesqueue.push_front(elapsedtime);
 	this->lastframetime = this->getTime();
+	*/
 
 	return elapsedtime;
 }
