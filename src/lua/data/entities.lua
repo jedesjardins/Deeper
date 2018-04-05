@@ -1,5 +1,15 @@
 local entities = {}
 
+-- how effects play off eachother
+inter_effects = {
+	fire = {
+		water = -1,
+	},
+	water = {
+		fire = -1,
+	}
+}
+
 hand_positions = {
 	man = {
 		{--framey=1
@@ -159,10 +169,30 @@ entities.man = {
 	},
 	effects = {
 		fire = {
-			health = -5
-		}
+			source = 0,
+			amount = 0,
+			damage = {
+				health = -5
+			},
+		},
+		water = {
+			source = 0,
+			amount = 0, 
+			damage = {}
+		},
+		starvation = {
+			source = 0,
+			amount = 0,
+			damage = {
+				hunger = -5
+			},
+		},
 	},
 	health = {
+		amount = 100,
+		max = 100
+	},
+	hunger = {
 		amount = 100,
 		max = 100
 	}
@@ -186,6 +216,18 @@ entities.block = {
 		framey = 1,
 		totalframesx = 1,
 		totalframesy = 1
+	},
+	effects = {
+		water = {
+			source = 100,
+			amount = 100,
+			damage = {}
+		}
+	},
+	hitbox = {
+		hit_ids = {},
+		effects = {},
+		damage = {}
 	}
 }
 
@@ -257,7 +299,7 @@ entities.sword = {
 	}
 }
 
-entities.rapier = {
+entities.fire_rapier = {
 	item = {
 		name = "Rapier",
 		stackable = false
@@ -299,7 +341,7 @@ entities.rapier = {
 			-- straight damage
 			damage = {
 				-- type = amount
-				--health = -10
+				 health = -10
 			}
 		},
 		actions = {

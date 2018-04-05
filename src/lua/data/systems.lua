@@ -36,7 +36,7 @@ function systems.controlPlayer(ecs, dt, input)
 			print("\tsize: ", #inventory.items)
 			print("\tcurr index", inventory.curr_index, inventory.items[inventory.curr_index])
 		end
-
+ 
 		--switch items
 		if input:getKeyState("Q") == KS.PRESSED then
 			if #inventory.items > 1 then
@@ -255,6 +255,80 @@ function systems.updateLock(ecs, dt, input)
 	end
 end
 
+function systems.updateState(ecs, dt, input)
+	local entities = ecs:requireAll("state")
+
+	for _, id in ipairs(entities) do
+		local state = ecs.components.state[id]
+
+		-- set the starting state
+		if not state.action then
+			state.action_name = "stand"
+			state.action = state.actions[state.action_name]
+			state.action.duration = (hold and hold.actions[state.action_name] and hold.actions[state.action_name].duration) 
+						or state.actions[state.action_name].base_duration
+		end
+
+		state.start = false
+
+		
+		-- held item action info
+		local hold = ecs.components.hand[id] 
+					and ecs.components.hand[id].item
+					and ecs.components.holdable[ecs.components.hand[id].item]
+
+		state.time = state.time + dt/1000
+		-- end action, start next
+		if state.time > state.action.duration then
+			state.action_name = state.action.next_action or state.action.stop
+			state.action.next_action = nil
+			state.action = state.actions[state.action_name]
+			state.action.duration = (hold and hold.actions[state.action_name] and hold.actions[state.action_name].duration) 
+						or state.actions[state.action_name].base_duration
+
+			state.start = true
+			state.has_shot = false
+			-- reset hitbox
+			if hold then
+				ecs.components.hitbox[ecs.components.hand[id].item].hit_ids = {}
+			end
+
+			state.time = 0
+		end
+
+		--set new actions
+		for _, action_name in ipairs(state.action_queue) do
+			if hold 
+			   and hold.actions[state.action_name] 
+			   and hold.actions[state.action_name].combos[action_name] then
+
+				state.action.next_action = hold.actions[state.action_name].combos[action_name]
+											   or state.action.next_action
+											   or action_name
+
+			-- no held item, combos
+			else if state.action.combos then
+				state.action.next_action = state.action.combos[action_name] or state.action.next_action
+			end end
+
+			if state.action.interruptable and state.action_name ~= action_name then
+				state.action_name = action_name
+				state.action = state.actions[action_name]
+				state.start = true
+				state.has_shot = false
+				state.action.duration = (hold and hold.actions[state.action_name] and hold.actions[state.action_name].duration) 
+						or state.actions[state.action_name].base_duration
+
+				-- reset hitbox
+				if hold then
+					ecs.components.hitbox[ecs.components.hand[id].item].hit_ids = {}
+				end
+				state.time = 0
+			end
+		end
+	end
+end
+
 function systems.updateHeldItem(ecs, dt, input)
 	local entities = ecs:requireAll("hand", "position", "state")
 
@@ -358,32 +432,6 @@ function systems.updateHeldItem(ecs, dt, input)
 	end
 end
 
-function systems.ignore(ecs, dt, input)
-	local entities = ecs:requireAll("ignore")
-
-	for _, id in ipairs(entities) do
-		local ignore = ecs.components.ignore[id]
-
-		ignore.time = ignore.time - dt/1000;
-
-		if ignore.time < 0 then
-			ecs.components.ignore[id] = nil
-		end
-	end
-end
-
-function systems.lifetime(ecs, dt, input)
-	local entities = ecs:requireAll("lifetime")
-
-	for _, id in ipairs(entities) do
-		ecs.components.lifetime[id] = ecs.components.lifetime[id] - dt/1000
-
-		if ecs.components.lifetime[id] < 0 then
-			ecs:removeEntity(id)
-		end
-	end
-end
-
 function systems.updateCollision(ecs, dt, input)
 	local entities = ecs:requireAll("position", "collision")
 
@@ -415,11 +463,6 @@ function systems.updateCollision(ecs, dt, input)
 					local item2 = ecs.components.item[id2]
 
 					if pos2 and col2 then
-						local p2 = collision.getPointsAround(
-								{x = pos2.x+col2.offx, y = pos2.y+col2.offy, w = col2.w, h = col2.h, r = pos2.r}, 
-								{x = pos2.x, y = pos2.y}
-							)
-
 						--local does_collide, correction_vect = collision.collide(p1, p2)
 						local output = {}
 						collide_test(
@@ -558,34 +601,19 @@ function systems.updateCollision(ecs, dt, input)
 							end end end end
 
 
-							--[[
-								HITBOXES
-							]]
+--[[
+	HITBOXES
+]]
 							local hitbox = ecs.components.hitbox[id]
 							local hitbox2 = ecs.components.hitbox[id2]
 
 							-- id hits id2, id is an entity, id2 can be an item or entity
 							-- don't apply damage or anything to items? (durability?)
+--[[
+	HITBOX 1
+]]
 							if hitbox and not hitbox.hit_ids[id2] then
-								--[[
-									should items be affected the same as entities? light on fire, etc?
-									(yes but for now just aff)
-								]]
-								-- mark as hit? should this happen for entities? So they can repeatedly hit things?
-								-- hitbox.hit_ids[id2] = true
-								-- flash it
-								ecs.components.sprite[id].flash = 4*dt
-
-								-- recoil -- items don't recoil
-								if not ecs.components.item[id2] then
-									local dx = pos2.x - pos.x
-									local dy = pos2.y - pos.y
-
-									if mov2 then
-										mov2.mx = math.clamp(math.abs(dx/dy), 0, 1) * math.sign(dx) * 6
-										mov2.my = math.clamp(math.abs(dy/dx), 0, 1) * math.sign(dy) * 6
-									end
-								end
+								local has_effect = false
 
 								-- apply damage types
 								for damagetype, amount in pairs(hitbox.damage) do 
@@ -593,50 +621,63 @@ function systems.updateCollision(ecs, dt, input)
 
 									if comp then
 										comp.amount = (comp.amount - amount >= 0 and comp.amount - amount) or 0
+										if not has_effect and amount < 0 then
+											has_effect = true
+										end
 									end
 								end
 
-								--apply effects
+								-- buildup effects
 								local effects = ecs.components.effects[id2]
 								if effects then
-									-- certain effects might do damage
-									for effecttype, buildup in pairs(hitbox.effects or {}) do
-										-- apply damage
-										for damagetype, amount in pairs(effects[effecttype] or {}) do
-											local comp = ecs.components[damagetype][id2]
-											if comp then
-												-- TODO: resistances?
-												comp.amount = math.clamp(comp.amount + amount, 0, comp.max)
-											end
+									for effecttype, buildup in pairs(hitbox.effects) do
+										-- add effect to component
+										if not effects[effecttype] then
+											print(id2, "new effect", effecttype)
+											effects[effecttype] = {
+												damage = {},
+												source = 0,
+												amount = 0
+											}
 										end
+										-- apply buildup
+										effects[effecttype].amount = effects[effecttype].amount + buildup
+										if not has_effect and next(effects[effecttype].damage) then
+											has_effect = true
+										end
+									end
+								end
 
-										-- build up effects
-										local effect = ecs.components[effecttype][id2] or {amount = 0}
-										effect.amount = effect.amount + buildup
-										ecs.components[effecttype][id2] = effect
+								if has_effect then
+									-- flash it
+									ecs.components.sprite[id2].flash = 4*dt
+
+									-- recoil -- items don't recoil
+									if not ecs.components.item[id2] then
+										local dx = pos2.x - pos.x
+										local dy = pos2.y - pos.y
+
+										if mov2 then
+											mov2.mx = math.clamp(math.abs(dx/dy), 0, 1) * math.sign(dx) * 6
+											mov2.my = math.clamp(math.abs(dy/dx), 0, 1) * math.sign(dy) * 6
+										end
 									end
 								end
 							end
 
 							-- id2 hits id, id2 can be an item or entity, id has to be entity
+--[[
+	HITBOX 2
+]]
 							if hitbox2 and not hitbox2.hit_ids[id] 
 								and ecs.components.held[id2] ~= id then -- this checks if id2 wasn't picked up by id
-								-- mark as hit
-								ecs.components.hitbox[id2].hit_ids[id] = true
-								-- flash it
-								ecs.components.sprite[id].flash = 4*dt
 
-								-- knockback
-								-- if it's an item, calculate the movement based on the holder, otherwise use the items pos
-								local t_pos = ecs.components.position[ecs.components.held[id2]] or pos2
-
-								local dx = pos.x - t_pos.x
-								local dy = pos.y - t_pos.y
-
-								if mov then
-									mov.mx = math.clamp(math.abs(dx/dy), 0, 1) * math.sign(dx) * 6
-									mov.my = math.clamp(math.abs(dy/dx), 0, 1) * math.sign(dy) * 6
+								-- mark as hit if id2 is an item
+								if ecs.components.item[id2] then
+									ecs.components.hitbox[id2].hit_ids[id] = true
 								end
+								
+								local has_effect = false
 								
 								-- apply damage types
 								for damagetype, amount in pairs(hitbox2.damage or {}) do 
@@ -645,36 +686,51 @@ function systems.updateCollision(ecs, dt, input)
 									if comp then
 										-- TODO: resistances?
 										comp.amount = math.clamp(comp.amount + amount, 0, comp.max)
+										if not has_effect and amount < 0 then
+											has_effect = true
+										end
 									end
 								end
 
-								-- effects
+								-- buildup effects
 								local effects = ecs.components.effects[id]
 								if effects then
-									-- certain effects might do damage
-									for effecttype, buildup in pairs(hitbox2.effects or {}) do
-										-- apply damage
-										for damagetype, amount in pairs(effects[effecttype] or {}) do
-											local comp = ecs.components[damagetype][id]
-											if comp then
-												-- TODO: resistances?
-												comp.amount = math.clamp(comp.amount + amount, 0, comp.max)
-											end
+									for effecttype, buildup in pairs(hitbox2.effects) do
+										-- add effect to component
+										if not effects[effecttype] then
+											print(id, "new effect", effecttype)
+											effects[effecttype] = {
+												damage = {},
+												source = 0,
+												amount = 0
+											}
 										end
-
-										-- build up effects
-										local effect = ecs.components[effecttype][id] or {amount = 0}
-										effect.amount = effect.amount + buildup
-										ecs.components[effecttype][id] = effect
+										-- apply buildup
+										effects[effecttype].amount = effects[effecttype].amount + buildup
+										if not has_effect and next(effects[effecttype].damage) then
+											has_effect = true
+										end
 									end
 								end
-							end
 
-							-- reset new points after moved
-							p1 = collision.getPointsAround(
-								{x = pos.x+col.offx, y = pos.y+col.offy, w = col.w, h = col.h, r = pos.r}, 
-								{x = pos.x, y = pos.y}
-							)
+								if has_effect then
+									-- flash it
+									ecs.components.sprite[id].flash = 4*dt
+
+									-- knockback
+									if mov then
+										-- if it's an item, calculate the movement based on the holder, otherwise use the items pos
+										local t_pos = ecs.components.position[ecs.components.held[id2]] or pos2
+
+										local dx = pos.x - t_pos.x
+										local dy = pos.y - t_pos.y
+
+										mov.mx = math.clamp(math.abs(dx/dy), 0, 1) * math.sign(dx) * 6
+										mov.my = math.clamp(math.abs(dy/dx), 0, 1) * math.sign(dy) * 6
+									end
+								end
+
+							end
 						end
 					end
 				end
@@ -688,92 +744,95 @@ function systems.updateEffects(ecs, dt, input)
 
 	for _, id in ipairs(entities) do
 		local effects = ecs.components.effects[id]
+		local dampen = {}
+
+		-- inter effect actions occur here
+		for effecttype, effect in pairs(effects) do
+			for effectedtype, scale in pairs(inter_effects[effecttype] or {}) do
+				if effects[effectedtype] then
+					dampen[effectedtype] = math.clamp(effects[effectedtype].amount + (effect.amount*scale*dt/1000), 0, 200)
+					if dampen[effectedtype] ~= effects[effectedtype].amount then
+						--print(id, effecttype, "dampens", effectedtype, dampen[effectedtype], effects[effectedtype].amount)
+					end
+				end
+			end
+		end
 
 		for effecttype, effect in pairs(effects) do
-			if ecs.components[effecttype][id] and ecs.components[effecttype][id].amount >= 100 then
-				for damagetype, amount in pairs(effect) do
-					local comp = ecs.components[damagetype][id]
 
-					if comp then
-						-- TODO: resistances?
-						comp.amount = math.clamp(comp.amount+(amount*dt/1000), 0, comp.max)
+			--if dampen[effecttype] then print(effecttype, dampen[effecttype], effect.amount) end
+
+			effect.amount = math.clamp((dampen[effecttype] or effect.amount) + ((effect.source or 0)*dt/1000), 0, 200)
+
+			--print(id, effecttype, effect.amount)
+
+			if effect.amount >= 100 then
+				--print(id, "is effected by", effecttype, effect.amount)
+				-- add to hibox
+				if not ecs.components.hitbox[id] then
+					ecs.components.hitbox[id] = {
+						hit_ids = {},
+						effects = {},
+						damage = {}
+					}
+				end
+
+				--TODO: How much of an effect should be translated?
+				local susceptibility = .5
+				ecs.components.hitbox[id].effects[effecttype] = effect.amount*susceptibility
+
+				-- maybe damage should be calculated in it's own system so that fire can be affected by water, and electricity by water etc?
+				for damagetype, amount in pairs(effect.damage) do
+					damage_comp = ecs.components[damagetype][id]
+					if damage_comp then
+						damage_comp.amount = math.clamp(damage_comp.amount + amount*dt/1000, 0, damage_comp.max)
 					end
+				end
+			else
+				-- remove from hitbox
+				-- maybe have effect.amount shrink here so something that isn't quite on fire can lose it's buildup (if there is no source)
+				if ecs.components.hitbox[id] then
+
 				end
 			end
 		end
 	end
 end
 
-function systems.updateState(ecs, dt, input)
-	local entities = ecs:requireAll("state")
+function systems.updateHunger(ecs, dt, input)
+	-- Should food drain at a uniform rate?
+	-- how do different actions 
+	-- if food is 0, deal x damage/second
+end
+
+function systems.updateHealth(ecs, dt, input)
+	-- Should food drain at a uniform rate?
+	-- how do different actions
+	-- if health is 0 then 
+end
+
+function systems.ignore(ecs, dt, input)
+	local entities = ecs:requireAll("ignore")
 
 	for _, id in ipairs(entities) do
-		local state = ecs.components.state[id]
+		local ignore = ecs.components.ignore[id]
 
-		-- set the starting state
-		if not state.action then
-			state.action_name = "stand"
-			state.action = state.actions[state.action_name]
-			state.action.duration = (hold and hold.actions[state.action_name] and hold.actions[state.action_name].duration) 
-						or state.actions[state.action_name].base_duration
+		ignore.time = ignore.time - dt/1000;
+
+		if ignore.time < 0 then
+			ecs.components.ignore[id] = nil
 		end
+	end
+end
 
-		state.start = false
+function systems.lifetime(ecs, dt, input)
+	local entities = ecs:requireAll("lifetime")
 
-		
-		-- held item action info
-		local hold = ecs.components.hand[id] 
-					and ecs.components.hand[id].item
-					and ecs.components.holdable[ecs.components.hand[id].item]
+	for _, id in ipairs(entities) do
+		ecs.components.lifetime[id] = ecs.components.lifetime[id] - dt/1000
 
-		state.time = state.time + dt/1000
-		-- end action, start next
-		if state.time > state.action.duration then
-			state.action_name = state.action.next_action or state.action.stop
-			state.action.next_action = nil
-			state.action = state.actions[state.action_name]
-			state.action.duration = (hold and hold.actions[state.action_name] and hold.actions[state.action_name].duration) 
-						or state.actions[state.action_name].base_duration
-
-			state.start = true
-			state.has_shot = false
-			-- reset hitbox
-			if hold then
-				ecs.components.hitbox[ecs.components.hand[id].item].hit_ids = {}
-			end
-
-			state.time = 0
-		end
-
-		--set new actions
-		for _, action_name in ipairs(state.action_queue) do
-			if hold 
-			   and hold.actions[state.action_name] 
-			   and hold.actions[state.action_name].combos[action_name] then
-
-				state.action.next_action = hold.actions[state.action_name].combos[action_name]
-											   or state.action.next_action
-											   or action_name
-
-			-- no held item, combos
-			else if state.action.combos then
-				state.action.next_action = state.action.combos[action_name] or state.action.next_action
-			end end
-
-			if state.action.interruptable and state.action_name ~= action_name then
-				state.action_name = action_name
-				state.action = state.actions[action_name]
-				state.start = true
-				state.has_shot = false
-				state.action.duration = (hold and hold.actions[state.action_name] and hold.actions[state.action_name].duration) 
-						or state.actions[state.action_name].base_duration
-
-				-- reset hitbox
-				if hold then
-					ecs.components.hitbox[ecs.components.hand[id].item].hit_ids = {}
-				end
-				state.time = 0
-			end
+		if ecs.components.lifetime[id] < 0 then
+			ecs:removeEntity(id)
 		end
 	end
 end
@@ -858,7 +917,6 @@ end
 
 function systems.drawHitbox(ecs, drawcontainer)
 	local entities = ecs:requireAll("position", "collision")
-	local drawItems = {}
 
 	for _, id in ipairs(entities) do
 		local position = ecs.components.position[id]
@@ -887,6 +945,21 @@ function systems.drawHitbox(ecs, drawcontainer)
 		itemsprite.dest.w = collision.w 
 		itemsprite.dest.h = collision.h
 
+		drawcontainer:add(di)
+	end
+end
+
+function systems.drawUI(ecs, drawcontainer)
+	-- assume id == 1 is the player id
+	local player_id = 4
+
+	local health = ecs.components.health[player_id]
+
+	if health.amount < health.max/2 then
+		local di = DrawItem:new(5)
+		local sprite = di.data.uisprite
+
+		sprite.texturename = "fire.png"
 		drawcontainer:add(di)
 	end
 end

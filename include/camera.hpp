@@ -75,13 +75,8 @@ struct DrawItemOptionBox
 struct DrawUISprite
 {
 	std::string texturename;
-	unsigned framex;
-	unsigned framey;
-	unsigned totalframesx;
-	unsigned totalframesy;
-	double rotation;
-	Rect dest;
-	bool flash;
+	double x;
+	double y;
 };
 
 struct DrawUnion

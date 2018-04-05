@@ -63,11 +63,18 @@ void registerUsertypes(sol::state &lua)
 		"h", &DrawItemOptionBox::h
 		);
 
+	lua.new_usertype<DrawUISprite>("DrawUISprite",
+		"texturename", &DrawUISprite::texturename,
+		"x", &DrawUISprite::x,
+		"y", &DrawUISprite::y
+		);
+
 	lua.new_usertype<DrawUnion>("DrawUnion",
 		"rect", &DrawUnion::rect,
 		"sprite", &DrawUnion::sprite,
 		"textbox", &DrawUnion::textbox,
-		"optionbox", &DrawUnion::optionbox
+		"optionbox", &DrawUnion::optionbox,
+		"uisprite", &DrawUnion::uisprite
 		);
 
 	lua.new_usertype<DrawItem>("DrawItem",

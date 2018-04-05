@@ -21,13 +21,22 @@ function state:enter()
 	self.ecs:addEndSystem(systems.lifetime)
 	self.ecs:addDrawSystem(systems.draw)
 	--self.ecs:addDrawSystem(systems.drawHitbox)
+	--self.ecs:addDrawSystem(systems.drawUI)
 
 	self.player_id = self.ecs:addEntity("man", {0, 0})
-	local id2 = self.ecs:addEntity("sword", {2, 1})
-	local id4 = self.ecs:addEntity("rapier", {2, -1})
 
-	local id3 = self.ecs:addEntity("man", {-2, 0})
-	self.ecs.components.control[id3] = nil
+	local id2 = self.ecs:addEntity("block", {-4, 0})
+	local id3 = self.ecs:addEntity("fire_rapier", {2, -1})
+
+	local id4 = self.ecs:addEntity("man", {-2, 0})
+	self.ecs.components.control[id4] = nil
+	--[[
+	local id2 = self.ecs:addEntity("sword", {2, 1})
+	local id3 = self.ecs:addEntity("fire_rapier", {2, -1})
+
+	local id4 = self.ecs:addEntity("man", {-2, 0})
+	self.ecs.components.control[id4] = nil
+	]]
 
 	for x=-5, 5 do
 		self.ecs:addEntity("block", {x, 3})
@@ -51,6 +60,9 @@ function state:enter()
 	self.r1.x, self.r1.y, self.r1.w, self.r1.h = 0, 0, 1, 1
 	self.r2 = Rect.new()
 	self.r2.x, self.r2.y, self.r2.w, self.r2.h = 1, 0, 1, 1
+
+	self.frame = 0
+	self.times = {}
 end
 
 function state:exit()
@@ -58,7 +70,14 @@ function state:exit()
 end
 
 function state:update(dt, input)
+	self.times[self.frame] = dt
+	local sum = 0
+	for i=0, #self.times do
+		sum = sum + self.times[i]
+	end
+	self.frame = ((self.frame + 1) % 10)
 
+	--print(sum/(#self.times+1))
 	--print(dt)
 
 	if input:getKeyState("Escape") == KS.PRESSED then

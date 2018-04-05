@@ -225,9 +225,7 @@ void Camera::draw(DrawContainer &dc)
 				SDL_RenderCopyEx(this->render, texture, &frame, &out, -1*spr.rotation, nullptr, SDL_FLIP_NONE);
 
 				SDL_SetTextureColorMod(texture, 255, 255, 255);
-			}
-
-			
+			}			
 		}
 		else if (it.type == 3)
 		{
@@ -419,6 +417,27 @@ void Camera::draw(DrawContainer &dc)
 					SDL_RenderCopy(this->render, texture, &frame, &out);
 				}
 			}
+		}
+		else if (it.type == 5)
+		{
+			DrawUISprite spr = it.data.uisprite;
+
+			if(!this->textures[spr.texturename])
+			{
+				//std::cout << "loading texture: " << it.texturename << std::endl;
+				surface = IMG_Load(("resources/sprites/"+spr.texturename).c_str());
+
+				texture = SDL_CreateTextureFromSurface(this->render, surface);
+				this->textures[spr.texturename] = texture;
+
+				SDL_FreeSurface(surface);
+			}
+			else
+				texture = this->textures[spr.texturename];
+
+			SDL_Rect out{0, 0, 32, 32};
+
+			SDL_RenderCopy(this->render, texture, nullptr, &out);
 		}
 	}
 }
