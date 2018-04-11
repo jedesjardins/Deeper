@@ -216,18 +216,6 @@ entities.block = {
 		framey = 1,
 		totalframesx = 1,
 		totalframesy = 1
-	},
-	effects = {
-		water = {
-			source = 100,
-			amount = 100,
-			damage = {}
-		}
-	},
-	hitbox = {
-		hit_ids = {},
-		effects = {},
-		damage = {}
 	}
 }
 

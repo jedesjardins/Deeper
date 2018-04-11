@@ -436,8 +436,6 @@ function systems.updateCollision(ecs, dt, input)
 	local entities = ecs:requireAll("position", "collision")
 
 	for _, id in ipairs(entities) do
-	--for i = 1, #entities do
-		--local id = entities[i]
 
 		local pos = ecs.components.position[id]
 		local col = ecs.components.collision[id]
@@ -863,89 +861,82 @@ function systems.updateAnimation(ecs, dt, input)
 	end
 end
 
-function systems.draw(ecs, drawcontainer)
+function systems.draw(ecs, viewport)
 	local entities = ecs:requireAll("position", "sprite")
+
 	local drawItems = {}
 
 	for _, id in ipairs(entities) do
 		local position = ecs.components.position[id]
-		local sprite = ecs.components.sprite[id]
 
-		local di = DrawItem:new(2)
-		local itemsprite = di.data.sprite
+		--TODO: Is this necessary?
+		position.z = position.y - position.h/2
 
-		if sprite.flash ~= nil and sprite.flash > 0 then
-			itemsprite.texturename = sprite.img.."_white.png"
-		else
-			itemsprite.texturename = sprite.img..".png"
-		end
-
-		itemsprite.framex = sprite.framex
-		itemsprite.framey = sprite.framey
-		itemsprite.totalframesx = sprite.totalframesx
-		itemsprite.totalframesy = sprite.totalframesy
-
-		itemsprite.rotation = position.r
-
-		itemsprite.dest = Rect.new()
-		itemsprite.dest.x = position.x
-		itemsprite.dest.y = position.y
-		itemsprite.dest.w = position.w
-		itemsprite.dest.h = position.h
-
-		if ecs.components.health[id] then
-			itemsprite.life = ecs.components.health[id].amount / ecs.components.health[id].max 
-		else
-			itemsprite.life = 1
-		end
-
-		--drawcontainer:add(di)
-
-		if not position.z then position.z = position.y - position.h/2 end
-
-		table.insert(drawItems, {position.z, di})
+		table.insert(drawItems, {position.z, id})
 	end
 
 	local sortfunc = function (a, b) return a[1] > b[1] end
-	
+
 	table.sort(drawItems, sortfunc)
 
-	for i, v in ipairs(drawItems) do
-		drawcontainer:add(v[2])
+	local texturename = ""
+	local vp_rect = Rect.new()
+	local out_rect = Rect.new()
+	vp_rect.x = viewport.x
+	vp_rect.y = viewport.y
+	vp_rect.w = viewport.w
+	vp_rect.h = viewport.h
+
+	for _, id in ipairs(drawItems) do
+
+		local position = ecs.components.position[id[2]]
+		local sprite = ecs.components.sprite[id[2]]
+
+		out_rect.x = position.x
+		out_rect.y = position.y
+		out_rect.w = position.w
+		out_rect.h = position.h
+		out_rect.r = position.r
+
+		if sprite.flash ~= nil and sprite.flash > 0 then
+			texturename = sprite.img.."_white.png"
+		else
+			texturename = sprite.img..".png"
+		end
+
+		draw_sprite(texturename, vp_rect, out_rect, sprite.framex, sprite.framey, sprite.totalframesx, sprite.totalframesy)
 	end
 end
 
-function systems.drawHitbox(ecs, drawcontainer)
+function systems.drawHitbox(ecs, viewport)
 	local entities = ecs:requireAll("position", "collision")
+
+	local texturename = ""
+	local vp_rect = Rect.new()
+	local out_rect = Rect.new()
+	vp_rect.x = viewport.x
+	vp_rect.y = viewport.y
+	vp_rect.w = viewport.w
+	vp_rect.h = viewport.h
 
 	for _, id in ipairs(entities) do
 		local position = ecs.components.position[id]
 		local collision = ecs.components.collision[id]
 
-		local di = DrawItem:new(2)
-		local itemsprite = di.data.sprite
-
-		itemsprite.texturename = "hitbox.png"
-		itemsprite.framex = 1
-		itemsprite.framey = 1
-		itemsprite.totalframesx = 1
-		itemsprite.totalframesy = 1
-
-		itemsprite.rotation = position.r
-
-		itemsprite.life = 1
+		texturename = "hitbox.png"
 
 		local px = collision.offx
 		local py = collision.offy
+
 		local r = position.r
 
-		itemsprite.dest = Rect.new()
-		itemsprite.dest.x = px*cos(r) - py*sin(r) + position.x
-		itemsprite.dest.y = px*sin(r) + py*cos(r) + position.y
-		itemsprite.dest.w = collision.w 
-		itemsprite.dest.h = collision.h
+		out_rect.x = px*cos(r) - py*sin(r) + position.x
+		out_rect.y = px*sin(r) + py*cos(r) + position.y
+		out_rect.w = collision.w
+		out_rect.h = collision.h
+		out_rect.r = r
 
-		drawcontainer:add(di)
+		draw_sprite(texturename, vp_rect, out_rect, 1, 1, 1, 1)
 	end
 end
 

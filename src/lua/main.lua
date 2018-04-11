@@ -22,19 +22,19 @@ function math.clamp(val, min, max)
 end
 
 KS = KEYSTATE.new()
-DT = DRAWITEMTYPE.new()
+--DT = DRAWITEMTYPE.new()
 
 local input = Input.new()
 
 Debug:setDefault(true)
 
-function update(dt, drawcontainer)
+function update(dt)
 
 	local is_running = input:update()
 
 	is_running = is_running and SM:update(dt, input)
 
-	SM:draw(drawcontainer)
+	SM:draw()
 
 	return is_running
 end

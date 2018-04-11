@@ -1,42 +1,23 @@
 #include "camera.hpp"
 
-SDL_Rect Rect::convert()
+Lua_Texture::Lua_Texture()
+:texture(nullptr)
 {
-	return SDL_Rect{
-		(int)floor(this->x), 
-		(int)floor(this->y),
-		(int)floor(this->w),
-		(int)floor(this->h)
-		};
+	
 }
 
-DrawUnion::DrawUnion(){};
-DrawUnion::~DrawUnion(){};
-
-DrawItem::DrawItem(int type)
-:type(type)
+Lua_Texture::~Lua_Texture()
 {
-	if(type == 1) //Rect
-	{
-		this->data.rect = Rect();
-	}
-	else if(type == 2) //Sprite
-	{
-		this->data.sprite = DrawItemSprite();
-	}
-	else if(type == 3)
-	{
-		this->data.textbox = DrawItemTextBox();
-	}
-	else if(type == 4)
-	{
-		this->data.optionbox = DrawItemOptionBox();
-	}
+	this->deleteTexture();
 }
 
-void DrawContainer::add(DrawItem d)
+void Lua_Texture::deleteTexture()
 {
-	this->objs.push_back(d);
+	if(this->texture)
+	{	
+		SDL_DestroyTexture(this->texture);
+		this->texture = nullptr;
+	}
 }
 
 GlyphAtlas::GlyphAtlas()
@@ -110,6 +91,122 @@ void Camera::push()
 	SDL_RenderPresent(this->render);
 }
 
+void Camera::draw_texture(SDL_Texture *target, Rect target_rect, 
+	std::string texturename, Rect src_rect)
+{
+	SDL_Texture *texture;
+	SDL_Surface *surface;
+
+	if(!this->textures[texturename])
+	{
+		surface = IMG_Load(("resources/sprites/"+texturename).c_str());
+
+		texture = SDL_CreateTextureFromSurface(this->render, surface);
+		this->textures[texturename] = texture;
+
+		SDL_FreeSurface(surface);
+	}
+	else
+		texture = this->textures[texturename];
+
+	SDL_Rect tgt {	(int)round(target_rect.x),
+					(int)round(target_rect.y),
+					(int)round(target_rect.w),
+					(int)round(target_rect.h)};
+
+	SDL_Rect src {	(int)round(src_rect.x),
+					(int)round(src_rect.y),
+					(int)round(src_rect.w),
+					(int)round(src_rect.h)};
+
+	SDL_SetRenderTarget(this->render, target);
+
+	SDL_RenderCopy(this->render, texture, &tgt, &src);
+}
+
+void Camera::draw_sprite(std::string texturename, Rect viewport, Rect location,
+		int spr_framex, int spr_framey, int totalframesx, int totalframesy)
+{
+	SDL_Texture *texture;
+	SDL_Surface *surface;
+
+	if(!this->textures[texturename])
+	{
+		surface = IMG_Load(("resources/sprites/"+texturename).c_str());
+
+		texture = SDL_CreateTextureFromSurface(this->render, surface);
+		this->textures[texturename] = texture;
+
+		SDL_FreeSurface(surface);
+	}
+	else
+		texture = this->textures[texturename];
+
+	uint32_t format;
+	int access;
+	int w, h;
+
+	SDL_QueryTexture(texture, &format, &access, &w, &h);
+
+	w /= totalframesx;
+	int framex = (spr_framex - 1) * w;
+	h /= totalframesy;
+	int framey = (spr_framey - 1) * h;
+
+
+	SDL_Rect frame{framex, framey, w, h};
+
+	double scalex = (((double)this->screenrect.w)/(viewport.w*TILE_SIZE));
+	double scaley = (((double)this->screenrect.h)/(viewport.h*TILE_SIZE));
+
+
+	Rect renderRect;
+				// world scale * image height * in game scale
+	renderRect.w = scalex * w * (location.w*16/w);
+	renderRect.h = scaley * h * (location.h*16/h);
+
+	renderRect.x = -1*viewport.x*TILE_SIZE*scalex  + (.5 * this->screenrect.w) //get viewport translation to screen
+					+ location.x*TILE_SIZE*scalex 						//add position
+					- (.5 * renderRect.w);								//subtract half the width
+
+	renderRect.y = viewport.y*TILE_SIZE*scaley + (.5 * this->screenrect.h) 
+					- location.y*TILE_SIZE*scaley 
+					- (.5 * renderRect.h);
+
+	SDL_Rect out{
+		(int)round(renderRect.x),
+		(int)round(renderRect.y),
+		(int)round(renderRect.w),
+		(int)round(renderRect.h)
+	};
+
+	SDL_SetRenderTarget(this->render, nullptr);
+
+	SDL_RenderCopyEx(this->render, texture, &frame, &out, -1*location.r, nullptr, SDL_FLIP_NONE);
+
+	double life = 1;
+
+	if (life <= .75)
+	{
+		SDL_SetTextureColorMod(texture, 255, (life*255), (life*255));
+
+		int diff = (double)frame.h - life*frame.h;
+		frame.h -= diff;
+		frame.y += diff;
+
+		diff = (double)out.h - life*out.h;
+		diff = diff - diff%(int)scaley;
+		out.h -= diff;
+		out.y += diff;
+
+		//SDL_RenderCopyEx(this->render, texture, &frame, &out, -1*rotation, nullptr, SDL_FLIP_NONE);
+		SDL_RenderCopy(this->render, texture, &frame, &out);
+
+		SDL_SetTextureColorMod(texture, 255, 255, 255);
+	}
+}
+
+/*
 void Camera::draw(DrawContainer &dc)
 {	
 	SDL_Texture *texture;
@@ -441,3 +538,4 @@ void Camera::draw(DrawContainer &dc)
 		}
 	}
 }
+*/

@@ -230,9 +230,9 @@ function ECS:update(dt, input)
 	return ret
 end
 
-function ECS:draw(drawcontainer)
+function ECS:draw(viewport)
 	for index, func in ipairs(self.drawsystems) do
-		func(self, drawcontainer)
+		func(self, viewport)
 	end
 end
 

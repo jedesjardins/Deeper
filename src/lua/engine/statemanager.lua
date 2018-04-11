@@ -41,10 +41,10 @@ function StateManager:update(dt, input)
 	return #self.stack > 0
 end
 
-function StateManager:draw(drawcontainer)
+function StateManager:draw()
 
 	for _, state in ipairs(self.stack) do
-		state:draw(drawcontainer)
+		state:draw()
 	end
 end
 

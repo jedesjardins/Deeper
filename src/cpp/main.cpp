@@ -29,65 +29,9 @@ void registerUsertypes(sol::state &lua)
 		"w", &Rect::w,
 		"h", &Rect::h,
 		"r", &Rect::r);
-		/*
-		"collide", &Rect::collide,
-		"resolve", &Rect::resolve,
-		"resolveBoth", &Rect::resolveBoth
-		);*/
 
-	lua.new_usertype<DrawItemSprite>("DrawItemSprite",
-		"texturename", &DrawItemSprite::texturename,
-		"framex", &DrawItemSprite::framex,
-		"framey", &DrawItemSprite::framey,
-		"totalframesx", &DrawItemSprite::totalframesx,
-		"totalframesy", &DrawItemSprite::totalframesy,
-		"rotation", &DrawItemSprite::rotation,
-		"dest", &DrawItemSprite::dest,
-		"life", &DrawItemSprite::life
-		);
 
-	lua.new_usertype<DrawItemTextBox>("DrawItemTextBox",
-		"firstline", &DrawItemTextBox::firstline,
-		"secondline", &DrawItemTextBox::secondline,
-		"showcontinuecursor", &DrawItemTextBox::showcontinuecursor,
-		"x", &DrawItemTextBox::x,
-		"y", &DrawItemTextBox::y,
-		"w", &DrawItemTextBox::w,
-		"h", &DrawItemTextBox::h
-		);
-
-	lua.new_usertype<DrawItemOptionBox>("DrawItemOptionBox",
-		"x", &DrawItemOptionBox::x,
-		"y", &DrawItemOptionBox::y,
-		"w", &DrawItemOptionBox::w,
-		"h", &DrawItemOptionBox::h
-		);
-
-	lua.new_usertype<DrawUISprite>("DrawUISprite",
-		"texturename", &DrawUISprite::texturename,
-		"x", &DrawUISprite::x,
-		"y", &DrawUISprite::y
-		);
-
-	lua.new_usertype<DrawUnion>("DrawUnion",
-		"rect", &DrawUnion::rect,
-		"sprite", &DrawUnion::sprite,
-		"textbox", &DrawUnion::textbox,
-		"optionbox", &DrawUnion::optionbox,
-		"uisprite", &DrawUnion::uisprite
-		);
-
-	lua.new_usertype<DrawItem>("DrawItem",
-		sol::constructors<DrawItem(int)>(),
-		"type", &DrawItem::type,
-		"data", &DrawItem::data
-		);
-
-	lua.new_usertype<DrawContainer>("DrawContainer",
-		"dim", &DrawContainer::dim,
-		"objs", &DrawContainer::objs,
-		"add", &DrawContainer::add
-		);
+	lua.new_usertype<Lua_Texture>("Lua_Texture");
 
 	lua.new_usertype<KEYSTATE>("KEYSTATE",
 		"NONE", sol::readonly(&KEYSTATE::NONE),
@@ -96,13 +40,6 @@ void registerUsertypes(sol::state &lua)
 		"RELEASED", sol::readonly(&KEYSTATE::RELEASED)
 		);
 
-	lua.new_usertype<DRAWITEMTYPE>("DRAWITEMTYPE",
-		"NONE", sol::readonly(&DRAWITEMTYPE::NONE),
-		"RECT", sol::readonly(&DRAWITEMTYPE::RECT),
-		"SPRITE", sol::readonly(&DRAWITEMTYPE::SPRITE),
-		"TEXTBOX", sol::readonly(&DRAWITEMTYPE::TEXTBOX),
-		"OPTIONBOX", sol::readonly(&DRAWITEMTYPE::OPTIONBOX)
-		);
 
 	lua.new_usertype<Input>("Input",
 		"keystates", &Input::keystates,
@@ -111,8 +48,6 @@ void registerUsertypes(sol::state &lua)
 		);
 
 	lua["collide_test"] = &collide;
-
-	lua["delay"] = &SDL_Delay;
 }
 
 
@@ -150,7 +85,36 @@ int main( int argc, char* args[] )
 
 	render = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
 	
-	Camera camera{window, render};
+	Camera *camera = new Camera(window, render);
+
+
+	/*
+		These enclosures allow drawing to the screen without access to the camera or SDL_Texture directly
+		SDL_Texture is an incomplete type and can't be used in the templated sol functions
+		Also, using lambdas here so lua doesn't deallocate the camera, which would cause a seg fault
+	*/
+	lua.set_function("draw_sprite",
+		[camera](std::string tn, Rect vpr, Rect lr,
+			int x, int y, int w, int h)
+		{
+			camera->draw_sprite(tn, vpr, lr, x, y, w, h);
+		});
+
+	lua.set_function("draw_texture", 
+		[camera](SDL_Texture *tgt, Rect tgt_r, std::string t_n, Rect src_r)
+		{
+			camera->draw_texture(tgt, tgt_r, t_n, src_r);
+		});
+	
+	lua.set_function("init_texture",
+		[render](Lua_Texture &l_txt, int w, int h)
+		{
+			//TODO: release texture first
+			l_txt.deleteTexture();
+
+			l_txt.texture = SDL_CreateTexture(render, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+		});
+
 	Clock frames_lock{};
 
 	bool running = true;
@@ -163,14 +127,10 @@ int main( int argc, char* args[] )
 	frames_lock.tick();
 
 	while(running)
-	{	
-		DrawContainer dc;
-
-		running &= (bool)update(dt, dc);
-
-		camera.clear();
-		camera.draw(dc);
-		camera.push();
+	{
+		camera->clear();
+		running &= (bool)update(dt);
+		camera->push();
 
 		dt = frames_lock.tick();
 		fps = frames_lock.getFPS();

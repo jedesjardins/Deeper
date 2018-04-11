@@ -20,13 +20,13 @@ function state:enter()
 	self.ecs:addSystem(systems.updateAnimation)
 	self.ecs:addEndSystem(systems.lifetime)
 	self.ecs:addDrawSystem(systems.draw)
-	--self.ecs:addDrawSystem(systems.drawHitbox)
+	self.ecs:addDrawSystem(systems.drawHitbox)
 	--self.ecs:addDrawSystem(systems.drawUI)
 
 	self.player_id = self.ecs:addEntity("man", {0, 0})
 
 	local id2 = self.ecs:addEntity("block", {-4, 0})
-	local id3 = self.ecs:addEntity("fire_rapier", {2, -1})
+	local id3 = self.ecs:addEntity("sword", {2, -1})
 
 	local id4 = self.ecs:addEntity("man", {-2, 0})
 	self.ecs.components.control[id4] = nil
@@ -93,8 +93,8 @@ function state:update(dt, input)
 end
 
 function state:draw(drawcontainer)
-	drawcontainer.dim = self.vp
-	self.ecs:draw(drawcontainer)
+	--drawcontainer.dim = self.vp
+	self.ecs:draw(self.vp)
 end
 
 

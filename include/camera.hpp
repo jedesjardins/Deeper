@@ -13,24 +13,74 @@
 
 #define TILE_SIZE 16
 
-struct Point{
+struct Point
+{
 	double x;
 	double y;
 };
 
-struct Rect{
+struct Rect
+{
 	double x;
 	double y;
 	double w;
 	double h;
 	double r;
-
-	SDL_Rect convert();
-	bool collide(const Rect&);
-	void resolve(const Rect&, Point&);
-	void resolveBoth(const Rect&, Point&, Point&);
 };
 
+struct Lua_Texture
+{
+	SDL_Texture *texture;
+	Lua_Texture();
+	~Lua_Texture();
+
+	void deleteTexture();
+};
+
+class GlyphAtlas
+{
+private:
+	TTF_Font *font;
+	std::unordered_map<char, SDL_Texture *> glyphs;
+
+public:
+	GlyphAtlas();
+	~GlyphAtlas();
+
+	SDL_Texture* getGlyph(SDL_Renderer *, char);
+};
+
+class Camera
+{
+private:
+	SDL_Window *window;
+	SDL_Renderer *render;
+
+	GlyphAtlas glyphatlas;
+	std::vector<SDL_Texture *> layers = {nullptr, nullptr, nullptr};
+	std::unordered_map<std::string, SDL_Texture *> textures;
+
+	Rect screenrect;
+
+public:
+	Camera(SDL_Window *, SDL_Renderer *);
+
+	~Camera();
+
+	void clear();
+	void push();
+
+	void draw_texture(SDL_Texture *target, Rect target_rect, std::string texture_name, Rect src_rect);
+
+	void draw_sprite(std::string texture_name, Rect viewport, Rect location,
+		int framex, int framey, int framesw, int framesy);
+
+	void draw_ui();
+
+	void draw_text();
+};
+
+/*
 struct DRAWITEMTYPE {
 	int NONE = 0;
 	int RECT = 1;
@@ -107,45 +157,6 @@ public:
 
 	void add(DrawItem);
 };
-
-class GlyphAtlas
-{
-private:
-	TTF_Font *font;
-	std::unordered_map<char, SDL_Texture *> glyphs;
-
-public:
-	GlyphAtlas();
-	~GlyphAtlas();
-
-	SDL_Texture* getGlyph(SDL_Renderer *, char);
-};
-
-class Camera
-{
-private:
-	SDL_Window *window;
-	SDL_Renderer *render;
-
-	GlyphAtlas glyphatlas;
-	std::vector<SDL_Texture *> layers = {nullptr, nullptr, nullptr};
-	std::unordered_map<std::string, SDL_Texture *> textures;
-
-	Rect screenrect;
-
-public:
-	Camera(SDL_Window *, SDL_Renderer *);
-
-	~Camera();
-
-	void clear();
-	void push();
-
-	void draw(DrawContainer &);
-
-	friend std::ostream& operator<<(std::ostream& os, const Camera &camera);
-
-
-};
+*/
 
 #endif

@@ -537,8 +537,9 @@ local systems = {
 		end
 	end,
 
-	drawSprite = function(ecs, drawcontainer)
+	drawSprite = function(ecs, viewport)
 		local entities = ecs:requireAll("sprite", "position")
+		--[[
 		local drawItems = {}
 
 		for _, id in ipairs(entities) do
@@ -629,6 +630,53 @@ local systems = {
 
 		for i, v in ipairs(drawItems) do
 			drawcontainer:add(v[2])
+		end
+		]]
+
+
+		local drawItems = {}
+
+		for _, id in ipairs(entities) do
+			local position = ecs.components.position[id]
+
+			--TODO: Is this necessary?
+			position.z = dis.dest.y - position.h/2
+
+			table.insert(drawItems, {position.z, id})
+		end
+
+		local sortfunc = function (a, b) return a[1] > b[1] end
+	
+		table.sort(drawItems, sortfunc)
+
+		vp_rect = Rect.new()
+		vp_rect.x = viewport.x
+		vp_rect.y = viewport.y
+		vp_rect.w = viewport.w
+		vp_rect.h = viewport.h
+
+		for _, id in ipairs(drawItems) do
+			--[[
+			local position = ecs.components.position[id]
+			local sprite = ecs.components.sprite[id]
+
+			local di = DrawItem.new(2)
+			local dis = di.data.sprite
+
+			dis.dest.x, dis.dest.y = position.x, position.y
+			dis.dest.w, dis.dest.h = position.w, position.h
+
+			dis.texturename = sprite.img
+			dis.framex = sprite.framex
+			dis.framey = sprite.framey
+			dis.totalframesx = sprite.framesx
+			dis.totalframesy = sprite.framesy
+			dis.rotation = position.rotation or 0
+			]]
+
+			local position = ecs.components.position[id]
+			local sprite = ecs.components.sprite[id]
+
 		end
 	end,
 
