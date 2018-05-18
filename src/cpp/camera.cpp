@@ -3,7 +3,7 @@
 Lua_Texture::Lua_Texture()
 :texture(nullptr)
 {
-	
+
 }
 
 Lua_Texture::~Lua_Texture()
@@ -91,8 +91,8 @@ void Camera::push()
 	SDL_RenderPresent(this->render);
 }
 
-void Camera::draw_texture(SDL_Texture *target, Rect target_rect, 
-	std::string texturename, Rect src_rect)
+void Camera::draw_to_texture(SDL_Texture *target, const Rect &target_rect, 
+	const std::string texturename, const Rect &src_rect)
 {
 	SDL_Texture *texture;
 	SDL_Surface *surface;
@@ -124,7 +124,16 @@ void Camera::draw_texture(SDL_Texture *target, Rect target_rect,
 	SDL_RenderCopy(this->render, texture, &tgt, &src);
 }
 
-void Camera::draw_sprite(std::string texturename, Rect viewport, Rect location,
+void Camera::draw_texture(SDL_Texture *texture, const Rect &viewport, const Rect &location)
+{
+	//double scalex = (((double)this->screenrect.w)/(viewport.w*TILE_SIZE));
+	//double scaley = (((double)this->screenrect.h)/(viewport.h*TILE_SIZE));
+	
+	SDL_SetRenderTarget(this->render, nullptr);
+	SDL_RenderCopy(this->render, texture, nullptr, nullptr);
+}
+
+void Camera::draw_sprite(std::string texturename, const Rect &viewport, const Rect &location,
 		int spr_framex, int spr_framey, int totalframesx, int totalframesy)
 {
 	SDL_Texture *texture;

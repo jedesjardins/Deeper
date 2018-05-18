@@ -3,8 +3,6 @@ local state = STATE.new()
 local systems = require(LUA_FOLDER .. 'data.systems')
 local entities = require(LUA_FOLDER .. 'data.entities')
 
-life = 1
-
 function state:enter()
 	self.ecs = ECS:new()
 	self.ecs:addPresets(entities)
@@ -20,7 +18,7 @@ function state:enter()
 	self.ecs:addSystem(systems.updateAnimation)
 	self.ecs:addEndSystem(systems.lifetime)
 	self.ecs:addDrawSystem(systems.draw)
-	self.ecs:addDrawSystem(systems.drawHitbox)
+	--self.ecs:addDrawSystem(systems.drawHitbox)
 	--self.ecs:addDrawSystem(systems.drawUI)
 
 	self.player_id = self.ecs:addEntity("man", {0, 0})
@@ -63,6 +61,10 @@ function state:enter()
 
 	self.frame = 0
 	self.times = {}
+
+	self.texture = Lua_Texture.new()
+
+	init_texture(self.texture, 100, 100)
 end
 
 function state:exit()
@@ -70,6 +72,7 @@ function state:exit()
 end
 
 function state:update(dt, input)
+
 	self.times[self.frame] = dt
 	local sum = 0
 	for i=0, #self.times do
@@ -94,9 +97,13 @@ end
 
 function state:draw(drawcontainer)
 	--drawcontainer.dim = self.vp
+
+	local r1 = Rect.new()
+	local r2 = Rect.new()
+
+	draw_texture(self.texture, r1, r2)
 	self.ecs:draw(self.vp)
+
 end
-
-
 
 return state

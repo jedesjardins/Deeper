@@ -52,7 +52,7 @@ public:
 
 class Camera
 {
-private:
+public:
 	SDL_Window *window;
 	SDL_Renderer *render;
 
@@ -62,7 +62,7 @@ private:
 
 	Rect screenrect;
 
-public:
+
 	Camera(SDL_Window *, SDL_Renderer *);
 
 	~Camera();
@@ -70,10 +70,20 @@ public:
 	void clear();
 	void push();
 
-	void draw_texture(SDL_Texture *target, Rect target_rect, std::string texture_name, Rect src_rect);
+	void draw_to_texture(SDL_Texture *target,
+						const Rect &target_rect,
+						const std::string texture_name,
+						const Rect &src_rect);
 
-	void draw_sprite(std::string texture_name, Rect viewport, Rect location,
-		int framex, int framey, int framesw, int framesy);
+	void draw_texture(SDL_Texture *texture_name, 
+						const Rect &viewport,
+						const Rect &location);
+
+	void draw_sprite(std::string texture_name, 
+						const Rect &viewport,
+						const Rect &location,
+						int framex, int framey,
+						int framesw, int framesy);
 
 	void draw_ui();
 

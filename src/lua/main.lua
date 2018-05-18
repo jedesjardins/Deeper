@@ -22,7 +22,6 @@ function math.clamp(val, min, max)
 end
 
 KS = KEYSTATE.new()
---DT = DRAWITEMTYPE.new()
 
 local input = Input.new()
 
@@ -38,5 +37,3 @@ function update(dt)
 
 	return is_running
 end
-
-

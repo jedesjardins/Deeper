@@ -53,6 +53,30 @@ void registerUsertypes(sol::state &lua)
 
 int main( int argc, char* args[] )
 {
+	/*
+		SDL INITIALIZATION
+	*/
+
+	SDL_Init(SDL_INIT_VIDEO);
+	SDL_Window *window = nullptr;
+	SDL_Renderer *render = nullptr;
+
+	window = SDL_CreateWindow("Echelon", 
+							0, 
+							0,
+							SCREEN_WIDTH,
+							SCREEN_HEIGHT,
+							SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
+
+	render = SDL_CreateRenderer(window, -1, SDL_RENDERER_TARGETTEXTURE);
+	
+	Camera *camera = new Camera(window, render);
+
+
+	/*
+		LUA INITIALIZATION
+	*/
+
 	sol::state lua;
 
 	lua.open_libraries(sol::lib::base,
@@ -66,28 +90,6 @@ int main( int argc, char* args[] )
 
 	registerUsertypes(lua);
 
-	lua.script("require('src.lua.main')");
-
-	sol::function update = lua["update"];
-
-	SDL_Init(SDL_INIT_VIDEO);
-	SDL_Window *window = nullptr;
-	SDL_Renderer *render = nullptr;
-	SDL_Surface *screenSurface = nullptr;
-
-
-	window = SDL_CreateWindow("Echelon", 
-							0, 
-							0,
-							SCREEN_WIDTH,
-							SCREEN_HEIGHT,
-							SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
-
-	render = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
-	
-	Camera *camera = new Camera(window, render);
-
-
 	/*
 		These enclosures allow drawing to the screen without access to the camera or SDL_Texture directly
 		SDL_Texture is an incomplete type and can't be used in the templated sol functions
@@ -95,25 +97,51 @@ int main( int argc, char* args[] )
 	*/
 	lua.set_function("draw_sprite",
 		[camera](std::string tn, Rect vpr, Rect lr,
-			int x, int y, int w, int h)
+			int fx, int fy, int fw, int fh)
 		{
-			camera->draw_sprite(tn, vpr, lr, x, y, w, h);
+			camera->draw_sprite(tn, vpr, lr, fx, fy, fw, fh);
 		});
 
-	lua.set_function("draw_texture", 
-		[camera](SDL_Texture *tgt, Rect tgt_r, std::string t_n, Rect src_r)
+	lua.set_function("draw_texture",
+		[camera](Lua_Texture &txt, Rect vpr, Rect lr)
 		{
-			camera->draw_texture(tgt, tgt_r, t_n, src_r);
+			camera->draw_texture(txt.texture, vpr, lr);
+		});
+
+	lua.set_function("draw_to_texture", 
+		[camera](Lua_Texture &target, const Rect &tgt_rect, const std::string t_name, const Rect &src_rect)
+		{
+			camera->draw_to_texture(target.texture, tgt_rect, t_name, src_rect);
 		});
 	
+	//TODO: Figure out why 
 	lua.set_function("init_texture",
 		[render](Lua_Texture &l_txt, int w, int h)
 		{
-			//TODO: release texture first
 			l_txt.deleteTexture();
 
+			/*
 			l_txt.texture = SDL_CreateTexture(render, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, w, h);
+
+			SDL_SetRenderTarget(render, l_txt.texture);
+
+			SDL_SetRenderDrawColor(render, 0xFF, 0x22, 0x22, 0xFF);
+			SDL_RenderClear(render);
+			*/
+
+			SDL_Surface *surface = IMG_Load("resources/sprites/block.png");
+
+			l_txt.texture = SDL_CreateTextureFromSurface(render, surface);
+
+			SDL_FreeSurface(surface);
 		});
+
+	lua.script("require('src.lua.main')");
+	sol::function update = lua["update"];
+
+	/*
+		Engine Loop
+	*/
 
 	Clock frames_lock{};
 
